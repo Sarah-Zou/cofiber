@@ -11,8 +11,7 @@ export default function Hero() {
 
       <div className="relative flex min-h-screen flex-col items-center justify-center px-6 text-center">
         <h1 className="display-xl text-paper max-w-4xl">
-          Access for the next era of{" "}
-          <span className="italic text-orange-soft">distributed sensing.</span>
+          Access for the next era of DFOS
         </h1>
 
         <div className="mt-12">

@@ -28,7 +28,7 @@ export default {
         line: "#E4DDD0",
       },
       fontFamily: {
-        serif: ['"Playfair Display"', "Georgia", "serif"],
+        heading: ['"DM Sans"', "system-ui", "sans-serif"],
         sans: ['"Inter"', "system-ui", "sans-serif"],
         mono: ['"JetBrains Mono"', "monospace"],
       },

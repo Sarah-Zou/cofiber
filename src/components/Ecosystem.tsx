@@ -30,7 +30,7 @@ export default function Ecosystem() {
               <span className="label text-line transition-colors duration-500 group-hover:text-orange-accent">
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <span className="font-serif text-xl font-light leading-snug text-ink">
+              <span className="font-heading text-xl font-light leading-snug text-ink">
                 {s}
               </span>
             </div>

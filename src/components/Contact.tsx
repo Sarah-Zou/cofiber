@@ -10,7 +10,7 @@ export default function Contact() {
 
         <Reveal delay={80}>
           <h2 className="display-xl max-w-4xl text-ink">
-            Working in <span className="italic text-orange-accent">DFOS</span>?
+            Working in <span className="font-bold text-orange-accent">DFOS</span>?
             <br />
             Let&apos;s talk.
           </h2>
@@ -23,7 +23,7 @@ export default function Contact() {
             </a>
             <div className="flex flex-col gap-2 sm:items-end">
               <span className="label">For advisors, investors, partners &amp; researchers</span>
-              <span className="font-serif text-lg font-light italic text-ink-muted">
+              <span className="font-heading text-lg font-bold text-ink-muted">
                 co-fiber.com
               </span>
             </div>

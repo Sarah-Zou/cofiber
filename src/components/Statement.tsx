@@ -10,7 +10,7 @@ export default function Statement() {
       <Reveal delay={80}>
         <p className="display-lg max-w-5xl text-ink">
           CoFiber is not a sensing vendor. We are the{" "}
-          <span className="italic text-orange-accent">neutral access and data layer</span>{" "}
+          <span className="font-bold text-orange-accent">neutral access and data layer</span>{" "}
           that lets the DFOS field build, test, and validate — without competing
           with the companies we serve.
         </p>
@@ -25,7 +25,7 @@ export default function Statement() {
           ].map((item) => (
             <div key={item.k} className="pt-8">
               <p className="label mb-3 text-orange-accent">{item.k}</p>
-              <p className="font-serif text-xl font-light text-ink">{item.v}</p>
+              <p className="font-heading text-xl font-light text-ink">{item.v}</p>
             </div>
           ))}
         </div>

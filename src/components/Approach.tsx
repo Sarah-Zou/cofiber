@@ -24,7 +24,7 @@ export default function Approach() {
           <p className="label mb-8 text-orange-accent">Why Now</p>
           <h2 className="display-lg max-w-4xl text-paper">
             The technology is ready.{" "}
-            <span className="italic text-paper/50">The infrastructure is not.</span>
+            <span className="font-bold text-paper/50">The infrastructure is not.</span>
           </h2>
         </Reveal>
 
@@ -45,7 +45,7 @@ export default function Approach() {
             ].map((item) => (
               <div key={item.k} className="pt-8">
                 <p className="label mb-3 text-orange-accent">{item.k}</p>
-                <p className="font-serif text-xl font-light text-paper/90">{item.v}</p>
+                <p className="font-heading text-xl font-light text-paper/90">{item.v}</p>
               </div>
             ))}
           </div>

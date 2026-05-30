@@ -30,7 +30,7 @@ export default function WhyHard() {
           <Reveal key={p.k} delay={i * 80}>
             <div className="pt-8">
               <p className="label mb-3 text-orange-accent">{p.k}</p>
-              <p className="font-serif text-xl font-light leading-snug text-ink">{p.v}</p>
+              <p className="font-heading text-xl font-light leading-snug text-ink">{p.v}</p>
             </div>
           </Reveal>
         ))}
