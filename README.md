@@ -29,17 +29,28 @@ npm run preview
 
 ## Deploy to GitHub Pages
 
-1. Push the repo to GitHub
-2. Run:
-   ```bash
-   npm run deploy
-   ```
-   This builds and pushes the `dist/` folder to the `gh-pages` branch.
+GitHub Pages must serve the **built site**, not the source files on `main`.
 
-3. In your GitHub repo → **Settings → Pages**, set source to the `gh-pages` branch.
+### Option A — Use the `gh-pages` branch (fastest)
 
-4. Add a **CNAME** record for `co-fiber.com` pointing to `<your-github-username>.github.io`.
-   The `public/CNAME` file is already configured with `co-fiber.com`.
+1. GitHub repo → **Settings → Pages**
+2. **Build and deployment → Source:** Deploy from a branch
+3. **Branch:** `gh-pages` / `/ (root)` → **Save**
+4. Wait 1–2 minutes, then hard-refresh [co-fiber.com](https://co-fiber.com)
+
+To publish updates manually:
+
+```bash
+npm run deploy
+```
+
+### Option B — GitHub Actions (recommended)
+
+1. GitHub repo → **Settings → Pages**
+2. **Build and deployment → Source:** **GitHub Actions**
+3. Push to `main` — the workflow builds and deploys automatically
+
+The custom domain `co-fiber.com` is configured via `public/CNAME` (copied into `dist/` on build).
 
 ## File Structure
 
