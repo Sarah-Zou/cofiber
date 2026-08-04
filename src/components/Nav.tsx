@@ -37,14 +37,14 @@ export default function Nav() {
         }`}
       >
         <nav className="mx-auto flex h-20 max-w-8xl items-center justify-between px-6 lg:px-12">
-          {/* Wordmark — icon on the dark hero, full logo on paper */}
+          {/* Reversed wordmark on the dark hero, standard wordmark on paper. */}
           <a href="#top" className="shrink-0 flex items-center" onClick={() => setOpen(false)}>
             <img
-              src={onLight ? "/logo_full.png" : "/logo_icon.png"}
+              src={onLight ? "/cofiber-horizontal.svg" : "/cofiber-horizontal-reversed.svg"}
               alt="CoFiber"
-              width={onLight ? 180 : 36}
-              height={onLight ? 48 : 36}
-              className={onLight ? "h-12 w-auto" : "h-9 w-auto"}
+              width={124}
+              height={40}
+              className="h-10 w-auto"
             />
           </a>
 

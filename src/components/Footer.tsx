@@ -4,7 +4,13 @@ export default function Footer() {
       <div className="mx-auto max-w-8xl px-6 py-12 lg:px-12">
         <div className="flex flex-col gap-6 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
           <a href="#top" className="flex items-center">
-            <img src="/logo_full.png" alt="CoFiber" width={180} height={48} className="h-12 w-auto" />
+            <img
+              src="/cofiber-horizontal.svg"
+              alt="CoFiber"
+              width={124}
+              height={40}
+              className="h-10 w-auto"
+            />
           </a>
           <p className="body max-w-sm text-sm">
             The neutral access and data infrastructure layer for distributed
