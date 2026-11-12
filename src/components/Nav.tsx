@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 
 const links = [
   { label: "Platform", href: "#platform" },
+  { label: "How it works", href: "/how-it-works/" },
   { label: "Ecosystem", href: "#ecosystem" },
   { label: "Why Now", href: "#approach" },
   { label: "About", href: "#about" },
@@ -24,6 +25,13 @@ export default function Nav() {
       document.body.style.overflow = "";
     };
   }, [open]);
+
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const closeOnDesktop = () => { if (desktop.matches) setOpen(false); };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => desktop.removeEventListener("change", closeOnDesktop);
+  }, []);
 
   const onLight = scrolled || open;
 
@@ -49,7 +57,7 @@ export default function Nav() {
           </a>
 
           {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-7">
             {links.map((link) => (
               <a
                 key={link.label}
@@ -66,9 +74,10 @@ export default function Nav() {
           {/* Mobile hamburger */}
           <button
             onClick={() => setOpen(!open)}
-            className="md:hidden flex items-center gap-3"
+            className="lg:hidden flex items-center gap-3"
             aria-label={open ? "Close menu" : "Open menu"}
             aria-expanded={open}
+            aria-controls="mobile-navigation"
           >
             <span className={`label ${onLight ? "text-ink-muted" : "text-paper/70"}`}>
               {open ? "Close" : "Menu"}
@@ -91,11 +100,14 @@ export default function Nav() {
 
       {/* Mobile full-screen overlay menu */}
       <div
-        className={`fixed inset-0 z-40 bg-paper transition-all duration-500 ease-editorial md:hidden ${
+        id="mobile-navigation"
+        inert={!open}
+        aria-hidden={!open}
+        className={`fixed inset-0 z-40 overflow-y-auto bg-paper transition-all duration-500 ease-editorial lg:hidden ${
           open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
-        <div className="flex h-full flex-col justify-center px-6">
+        <div className="flex min-h-full flex-col justify-center px-6 py-24">
           <p className="label mb-10">Navigation</p>
           <ul className="space-y-3">
             {links.map((link, i) => (

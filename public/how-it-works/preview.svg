@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="640" viewBox="0 0 1440 640" fill="none">
+  <defs>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse" patternTransform="skewY(-12)"><path d="M48 0H0V48" stroke="#F5F1E8" stroke-opacity=".055"/></pattern>
+    <linearGradient id="ground" x1="80" y1="80" x2="1300" y2="650" gradientUnits="userSpaceOnUse"><stop stop-color="#302B25"/><stop offset="1" stop-color="#151A20"/></linearGradient>
+    <linearGradient id="fiber" x1="240" y1="180" x2="1040" y2="450" gradientUnits="userSpaceOnUse"><stop stop-color="#F0B07A"/><stop offset=".55" stop-color="#E07A3E"/><stop offset="1" stop-color="#A4CFD2"/></linearGradient>
+    <g id="point"><circle r="12" fill="#1C1815" stroke="#F0B07A" stroke-width="2"/><circle r="4" fill="#F0B07A"/></g>
+    <g id="tree"><path d="M0 0V24" stroke="#6C7D71" stroke-width="2"/><path d="M0-24 15 7H-15Z" fill="#384D42"/><path d="M0-37 12-10H-12Z" fill="#486152"/></g>
+  </defs>
+  <path fill="url(#ground)" d="M0 0h1440v640H0z"/>
+  <path fill="url(#grid)" d="M0 0h1440v640H0z"/>
+  <g opacity=".3" stroke="#A6C9CD" stroke-width="28"><path d="M540-60C460 120 720 140 650 305S540 520 640 700"/></g>
+  <g stroke="#82786A" stroke-width="2" opacity=".35"><path d="m70 320 1270-120M120 360l1200-114M260 40l160 520M1020 50l-75 520"/></g>
+  <path d="M250 395 420 195 810 150 1135 310 1010 465 620 480Z" stroke="#E07A3E" stroke-opacity=".12" stroke-width="22" stroke-linejoin="round"/>
+  <path d="M250 395 420 195 810 150 1135 310 1010 465 620 480Z" stroke="url(#fiber)" stroke-width="3" stroke-linejoin="round"/>
+  <path d="m250 395 105 34" stroke="#F0B07A" stroke-width="2" stroke-dasharray="6 7"/>
+  <g transform="translate(235 293)">
+    <path d="m0 14 50-22 58 24-50 22Z" fill="#66513E"/>
+    <path d="M0 14v70l58 25V38Z" fill="#443D34" stroke="#817565"/>
+    <path d="M58 38v71l50-26V16Z" fill="#2C302E" stroke="#817565"/>
+    <path d="m15 39 25 11m-25 6 25 11m-25 6 25 11" stroke="#EAA469" stroke-width="5"/>
+    <path d="m70 49 24-12m-24 28 24-12" stroke="#A2BDC1" stroke-width="3"/>
+  </g>
+  <g transform="translate(535 136)" stroke="#B0A38E" stroke-width="3">
+    <path d="m0 54 154-15M0 68l154-15M28 19v69M126 10v68M28 19l98-9M28 19Q72 70 126 10"/>
+    <path d="M48 38v25m20-14v12m20-14v12m20-28v27" stroke-width="1.5"/>
+  </g>
+  <g transform="translate(1060 185)">
+    <path d="m0 20 54-24 73 33-55 24Z" fill="#53636A"/>
+    <path d="M0 20v59l72 32V53Z" fill="#38464D" stroke="#758B90"/>
+    <path d="M72 53v58l55-28V29Z" fill="#29373D" stroke="#758B90"/>
+    <path d="m14 44 43 19m-43-3 43 19m-43-3 43 19" stroke="#A4CFD2" stroke-width="3"/>
+  </g>
+  <g transform="translate(835 388)" stroke="#8D9B91" stroke-width="2">
+    <path d="m0 0 62 28v43L0 44Zm62 28 68-30v44L62 71Z" fill="#2D3A35"/>
+    <path d="M13 8v43m17-35v43m17-35v43m28-42v42m18-51v42m18-51v42"/>
+    <path d="M0 0 68-29l62 27-68 30Z" fill="#45554D"/>
+  </g>
+  <g><use href="#tree" x="735" y="240"/><use href="#tree" x="770" y="255"/><use href="#tree" x="805" y="236"/><use href="#tree" x="778" y="209"/><use href="#tree" x="955" y="331"/><use href="#tree" x="989" y="345"/><use href="#tree" x="1001" y="316"/><use href="#tree" x="490" y="390"/><use href="#tree" x="525" y="402"/></g>
+  <use href="#point" x="250" y="395"/><use href="#point" x="540" y="181"/><use href="#point" x="1135" y="310"/><use href="#point" x="1010" y="465"/>
+  <g font-family="Inter,Arial,sans-serif" fill="#F5F1E8" font-size="17">
+    <text x="160" y="266">Shared sensing</text><text x="545" y="109">Transport</text><text x="1080" y="160">Data center</text><text x="812" y="527">Utilities</text>
+  </g>
+  <g font-family="monospace" font-size="12" letter-spacing="2" fill="#C2B5A4"><text x="42" y="46">FROM FIBER TO TENANT</text><text x="1148" y="600">ILLUSTRATIVE ROUTE</text></g>
+  <g transform="translate(60 87)" stroke="#F0B07A" opacity=".65"><path d="M0 0h54M0 7h34"/></g>
+</svg>

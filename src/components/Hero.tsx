@@ -14,8 +14,15 @@ export default function Hero() {
           Access for the next era of DFOS
         </h1>
 
-        <div className="mt-12">
-          <a href="#contact" className="btn-primary">
+        <div className="mt-12 flex flex-col items-center gap-6 sm:flex-row sm:gap-8">
+          <a href="/how-it-works/" className="btn-primary">
+            See how it works
+            <Arrow />
+          </a>
+          <a
+            href="#contact"
+            className="inline-flex items-center gap-3 border-b border-paper/40 py-3 text-sm text-paper transition-colors hover:border-orange-soft hover:text-orange-soft focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-paper"
+          >
             Request early access
             <Arrow />
           </a>

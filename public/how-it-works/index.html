@@ -1,0 +1,1714 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Interactive demonstration of distributed fiber optic sensing and the FiberVM platform, with synthetic data.">
+<title>How it works · FiberVM | CoFiber</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#1C1815">
+<link rel="icon" type="image/svg+xml" href="/cofiber-icon.svg">
+<link rel="canonical" href="https://co-fiber.com/how-it-works/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://co-fiber.com/how-it-works/">
+<meta property="og:title" content="One fiber. Many applications. | CoFiber">
+<meta property="og:description" content="Explore fiber sensing, shared infrastructure, and the FiberVM tenant experience in an interactive demonstration with synthetic data.">
+<meta property="og:image" content="https://co-fiber.com/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: dark brand band with a Today / With FiberVM switch and a context-layer switch, full-bleed 3D stage; the story card (left) and the comparison card (top right) overlay the stage, retract on demand, and stack below it on phones. */
+:root{
+  --bg:#FBF9F4; --panel:rgba(251,249,244,.97); --panel-solid:#FBF9F4; --fg:#1C1815; --muted:#6B6259;
+  --line:#E4DDD0; --chip:#F5F1E8; --accent:#BF4B1A; --accent-ink:#FFFFFF; --today:#8A5A2B; --vm:#BD5D29;
+  --band:#0B1220; --band-ink:#F2EEE7; --band-muted:#A3ADBE; --band-line:rgba(255,255,255,.16);
+  --scene:#0B1220; --scene-ink:#EEF1F6; --scene-muted:#A3ADBE; --scene-tag:rgba(11,18,32,.82); --scene-edge:rgba(255,255,255,.14);
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0A101B; --panel:rgba(20,30,46,.93); --panel-solid:#141E2E; --fg:#F2EEE7; --muted:#9CA5B5;
+    --line:#26334B; --chip:#1C2940; --accent:#E07A3E; --accent-ink:#141E2E; --today:#D9A066; --vm:#E07A3E; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0A101B; --panel:rgba(20,30,46,.93); --panel-solid:#141E2E; --fg:#F2EEE7; --muted:#9CA5B5;
+  --line:#26334B; --chip:#1C2940; --accent:#E07A3E; --accent-ink:#141E2E; --today:#D9A066; --vm:#E07A3E; color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:15px;line-height:1.45;overflow:hidden}
+/* elements marked hidden stay hidden even where a rule sets their display */
+[hidden]{display:none!important}
+.app{height:100%;display:flex;flex-direction:column}
+.bar{flex:none;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  border-bottom:1px solid var(--band-line);background:var(--band);color:var(--band-ink)}
+.brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap;min-width:0}
+.logo{display:block;height:30px;width:auto}
+.divider{width:1px;height:24px;background:var(--band-line)}
+.brand b{font-size:20px;letter-spacing:.01em}
+.brand span.sub{color:var(--band-muted);font-size:13px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{font:700 13px/1 var(--font);padding:8px 12px;border:1px solid var(--line);background:var(--panel-solid);color:var(--fg);border-radius:6px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.bar .btn{background:transparent;color:var(--band-ink);border-color:var(--band-line)}
+.bar .btn:hover{border-color:#E07A3E}
+.seg{display:flex}
+.seg .btn{border-radius:0}.seg .btn:first-child{border-radius:6px 0 0 6px}.seg .btn:last-child{border-radius:0 6px 6px 0;border-left:0}
+.bar .seg .btn[aria-pressed="true"]{background:#E07A3E;border-color:#E07A3E;color:#141E2E}
+.modeseg .btn{font-size:14px;padding:9px 14px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.45;cursor:default}
+.btn:focus-visible,.dots button:focus-visible,.hidebtn:focus-visible,.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bar .btn:focus-visible{outline-color:#E07A3E}
+.main{position:relative;flex:1;min-height:0}
+.stage{position:absolute;inset:0;background:var(--scene);overflow:hidden}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.labels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.tag{position:absolute;left:0;top:0;white-space:nowrap;background:var(--scene-tag);color:var(--scene-ink);border:1px solid var(--scene-edge);
+  padding:3px 8px;border-radius:4px;font-size:12.5px;line-height:1.25;will-change:transform}
+.tag b{font-weight:700}
+.tag span{display:block;color:var(--scene-muted);font-size:11.5px}
+.tag span.ok{color:#94D27F}.tag span.wait{color:#E9C46A}.tag span.go{color:#F2A36F}
+.tag.ev{background:transparent;border:0;color:var(--scene-muted);font-size:11.5px;padding:0}
+.tag.hi b{color:#F2A36F}
+.tag.corr{background:transparent;border:0;padding:0;font:700 12px/1.2 var(--font);letter-spacing:.06em;text-transform:uppercase;color:#C9D2E0}
+.tag.insight{white-space:normal;width:250px;background:rgba(11,18,32,.9);border:1px solid #E07A3E;border-radius:6px;padding:7px 9px;font-size:12px}
+.tag.insight b{color:#F2A36F;display:block;margin-bottom:3px}
+.tag.insight ul{margin:0;padding-left:15px;color:#DDE3EC}
+.tag.insight li{margin:1px 0}
+.tag.src b{color:#5FD3F3}
+.navpad{position:absolute;right:max(16px,env(safe-area-inset-right,0px));bottom:16px;display:grid;grid-template-columns:repeat(3,34px);gap:4px;z-index:2}
+.navpad button{width:34px;height:34px;border-radius:6px;border:1px solid var(--scene-edge);background:rgba(11,18,32,.78);color:var(--scene-ink);font:700 14px/1 var(--font);cursor:pointer;touch-action:none}
+.navpad button:hover{border-color:#E07A3E}
+.navpad button:focus-visible{outline:2px solid #E07A3E;outline-offset:2px}
+.tag.new{border-color:#94D27F}
+.tag.new b{color:#B8E6A3}
+.hint{position:absolute;top:12px;left:max(16px,env(safe-area-inset-left,0px));color:var(--scene-muted);font-size:12px;pointer-events:none}
+.modebadge{position:absolute;top:34px;left:max(16px,env(safe-area-inset-left,0px));font:700 13px/1 var(--font);letter-spacing:.08em;text-transform:uppercase;padding:6px 10px;border-radius:4px;pointer-events:none;background:rgba(11,18,32,.75);border:1px solid var(--scene-edge);color:#F2A36F}
+.nogl{position:absolute;inset:0;display:grid;place-items:center;color:var(--scene-ink);padding:24px;text-align:center}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;box-shadow:0 8px 28px rgba(5,10,20,.22);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.story{position:absolute;left:max(16px,env(safe-area-inset-left,0px));bottom:16px;width:min(430px,calc(100% - 32px));max-height:calc(100% - 32px);overflow:auto;display:flex;flex-direction:column;gap:10px}
+.side{position:absolute;right:max(16px,env(safe-area-inset-right,0px));top:16px;width:340px;max-height:calc(100% - 32px);overflow:auto;display:flex;flex-direction:column;gap:10px;padding:14px 16px}
+.story,.side{transition:transform .35s ease,opacity .35s ease,visibility .35s}
+.story.off{transform:translateX(calc(-100% - 24px));opacity:0;visibility:hidden;pointer-events:none}
+.side.off{transform:translateX(calc(100% + 24px));opacity:0;visibility:hidden;pointer-events:none}
+.cardhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.hidebtn{font:700 12px/1 var(--font);padding:6px 9px;border-radius:5px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
+.hidebtn:hover{color:var(--fg);border-color:var(--muted)}
+.tab{position:absolute;font:700 13px/1 var(--font);padding:9px 13px;border-radius:999px;border:1px solid var(--accent);background:var(--panel-solid);color:var(--fg);cursor:pointer;box-shadow:0 6px 18px rgba(5,10,20,.3)}
+.tab:hover{background:var(--accent);color:var(--accent-ink)}
+.tab-left{left:max(16px,env(safe-area-inset-left,0px));bottom:16px}
+.tab-right{right:max(16px,env(safe-area-inset-right,0px));top:16px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.story h2{margin:0;font-size:23px;line-height:1.15;text-wrap:balance;color:var(--fg)}
+.story .body{display:flex;flex-direction:column;gap:8px}
+.story p{margin:0;max-width:62ch}
+.storynav{display:flex;align-items:center;gap:10px;margin-top:4px;flex-wrap:wrap;justify-content:flex-end}
+.dots{display:flex;gap:6px;flex:1 0 100%;flex-wrap:wrap}
+.dots button{width:9px;height:9px;padding:0;border-radius:50%;border:1px solid var(--muted);background:transparent;cursor:pointer}
+.dots button[aria-current="step"]{background:var(--accent);border-color:var(--accent)}
+.side h2{margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.count{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;font-weight:700}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper output{min-width:24px;text-align:center;font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums}
+.stepper .btn{padding:5px 10px;font-size:15px}
+.tbl-wrap{overflow-x:auto}
+.cmpbox{display:flex;flex-direction:column;gap:8px;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.prog{font-size:13px;color:var(--muted)}.prog b{color:var(--accent)}
+.srow .seen{grid-column:2;font-size:11.5px;color:var(--muted)}
+.srow[data-seen="1"] .sname::after{content:' ✓';color:var(--accent)}
+.stage-h{font-weight:700;color:var(--fg)}
+table.cmp{border-collapse:collapse;width:100%;font-size:13px}
+table.cmp th,table.cmp td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.cmp thead th{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+table.cmp td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+table.cmp th.row{font-weight:400;color:var(--muted);width:44%}
+table.cmp .cur{background:var(--chip)}
+table.cmp thead th.cur{color:var(--accent)}
+.cap{font-size:12.5px;color:var(--muted);margin:0}
+table.ben{border-collapse:collapse;width:100%;font-size:13px}
+table.ben th,table.ben td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+table.ben th{font-weight:700;white-space:nowrap}
+@media (max-width:820px){
+  html,body{height:auto}
+  body{overflow:auto}
+  .app{height:auto;min-height:100%}
+  .main{display:flex;flex-direction:column;gap:14px;padding-bottom:20px}
+  .stage{position:relative;inset:auto;height:56svh;min-height:320px}
+  .story,.side{position:static;width:auto;max-height:none;margin-left:max(16px,env(safe-area-inset-left,0px));margin-right:max(16px,env(safe-area-inset-right,0px));box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+  .story.off,.side.off{transform:none;opacity:1;visibility:visible;pointer-events:auto}
+  .tab,.hidebtn,#btnPanels,.hint{display:none!important}
+  .modebadge{top:12px}
+  .tag span{display:none}
+  .tag.ev{display:none}
+  .tag{font-size:11.5px;padding:2px 6px}
+  .brand span.sub{display:none}
+  /* on the applications step the waterfall card sits directly under the 3D view */
+  .main.wf-first .stage{order:0}.main.wf-first .side{order:1}.main.wf-first .story{order:2}
+}
+@media (prefers-reduced-motion:reduce){.story,.side{transition:none}}
+.pseg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.pseg button{font:700 12px/1 var(--font);padding:7px 10px;border:0;background:transparent;color:var(--muted);cursor:pointer;letter-spacing:.06em;text-transform:uppercase}
+.pseg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.pseg button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.pview{display:flex;flex-direction:column;gap:8px}
+.wfname{font-family:var(--mono);font-size:13px;color:var(--fg)}
+#wf{display:block;width:100%;height:150px;border-radius:6px;background:var(--scene);image-rendering:pixelated}
+.axis{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.secs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.srow{width:100%;text-align:left;display:grid;grid-template-columns:10px 1fr;column-gap:10px;row-gap:1px;align-items:center;font:inherit;color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:7px;padding:6px 10px;cursor:pointer}
+.srow:hover{border-color:var(--accent);background:var(--chip)}
+.srow .sname{text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--accent) 45%,transparent);text-underline-offset:3px}
+.srow[aria-pressed="true"]{border-color:var(--accent);background:var(--chip)}
+.srow:focus-visible,.cta:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.srow .dot{width:10px;height:10px;border-radius:50%}
+.sname{font-weight:700;font-size:14px}
+.smeta{grid-column:2;color:var(--muted);font-size:12.5px}
+.cta{align-self:flex-start;font:700 15px/1 var(--font);padding:11px 16px;border-radius:7px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);cursor:pointer}
+.bar #btnTenant{border-color:#E07A3E;color:#F2A36F}
+/* Tenant interface replica: a fixed light look that matches the product page */
+.tenant.t-in{animation:tfade .9s ease}
+@keyframes tfade{from{opacity:0;transform:scale(1.04)}to{opacity:1;transform:none}}
+.tenant.auto .t-app,.tenant.auto .t-signin{pointer-events:none}
+.tenant .t-take{right:calc(max(12px,env(safe-area-inset-right,0px)) + 150px)}
+.t-cursor{position:fixed;left:50%;top:50%;z-index:5;pointer-events:none;transition:left .8s ease,top .8s ease;display:none}
+.tenant.auto .t-cursor{display:block}
+.t-cursor.click::after{content:"";position:absolute;left:-10px;top:-10px;width:22px;height:22px;border-radius:50%;border:2px solid #BD5D29;animation:tclick .5s ease-out forwards}
+@keyframes tclick{from{opacity:1;transform:scale(.4)}to{opacity:0;transform:scale(1.6)}}
+.t-badge2{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:3;font:700 12px/1 var(--font);letter-spacing:.06em;text-transform:uppercase;padding:8px 12px;border-radius:999px;background:#1F2430;color:#FFFFFF}
+@media (prefers-reduced-motion:reduce){.tenant.t-in{animation:none}.t-cursor{transition:none}}
+.tenant{position:fixed;inset:0;z-index:100;background:#E7E5E1;color:#1F2430;font-family:var(--font);overflow:auto;color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tenant .t-close{position:fixed;bottom:calc(12px + env(safe-area-inset-bottom,0px));right:max(12px,env(safe-area-inset-right,0px));z-index:3;font:700 13px/1 var(--font);padding:8px 12px;border-radius:6px;border:1px solid #BD5D29;background:#FFFFFF;color:#1F2430;cursor:pointer}
+.tenant .t-close:hover{background:#BD5D29;color:#FFFFFF}
+.tenant button:focus-visible,.tenant input:focus-visible,.tenant select:focus-visible{outline:2px solid #BD5D29;outline-offset:2px}
+.t-signin{min-height:100%;display:grid;place-items:center;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:40px}
+.t-sbox{width:min(330px,100%);display:flex;flex-direction:column;gap:10px}
+.t-brand{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:700}
+.t-brand svg{width:26px;height:26px}
+.t-brand.small{font-size:18px}.t-brand.small svg{width:22px;height:22px}
+.t-sbox h2{margin:12px 0 0;font-size:24px;font-weight:400}
+.t-sbox p{margin:0;color:#5B6170;font-size:13px}
+.t-form{display:flex;flex-direction:column;gap:6px;background:#F8F7F5;border:2px solid #BD5D29;border-radius:8px;padding:12px;box-shadow:0 0 0 4px rgba(189,93,41,.12)}
+.t-form label{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#7A8090;font-weight:700}
+.t-form input{font:14px var(--mono);padding:8px 10px;border:1px solid #D6D2CB;border-radius:4px;background:#FFFFFF;color:#1F2430}
+.t-btn{align-self:flex-start;margin-top:6px;font:700 13px var(--font);padding:9px 16px;border-radius:5px;border:0;background:#1F2430;color:#FFFFFF;cursor:pointer}
+.t-note{font-size:12px!important}
+.t-app{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100%}
+.t-side{background:#E3E0DB;border-right:1px solid #D6D2CB;padding:16px 14px;padding-left:max(14px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:10px}
+.t-eyebrow{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#7A8090;font-weight:700}
+.t-card{background:#FFFFFF;border:1px solid #D6D2CB;border-radius:7px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.t-big{font-size:17px;font-weight:700}
+.t-mut{font-size:12px;color:#6B7180;font-family:var(--mono)}
+.t-cap{font-size:11px;color:#7A8090;text-transform:uppercase;letter-spacing:.06em}
+.t-pair{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.t-chips{display:flex;gap:6px;flex-wrap:wrap}
+.t-chips span{font:11px var(--mono);border:1px solid #D6D2CB;border-radius:999px;padding:3px 8px;color:#4B5160}
+.t-seg2{display:grid;grid-template-columns:1fr 1fr;border:1px solid #D6D2CB;border-radius:5px;overflow:hidden}
+.t-seg2 button{font:13px var(--font);padding:6px;border:0;background:#FFFFFF;color:#1F2430;cursor:pointer}
+.t-seg2 button[aria-pressed="true"]{background:#1F2430;color:#FFFFFF}
+.t-site{display:flex;align-items:center;gap:8px;margin-top:6px}
+.t-badge{font-size:10px;letter-spacing:.08em;font-weight:700;color:#2F7A3A;background:#DDF0DC;border-radius:3px;padding:2px 5px}
+.t-stream{display:flex;justify-content:space-between;width:100%;font:13px var(--mono);padding:6px 8px;border:0;border-left:3px solid transparent;background:transparent;color:#1F2430;cursor:pointer;text-align:left}
+.t-stream:hover{background:#ECE9E4}
+.t-stream[aria-pressed="true"]{background:#F3D8C8;border-left-color:#BD5D29}
+.t-stream span:last-child{color:#5B6170}
+.t-guide{margin-top:auto;background:#FFFFFF;border:1px solid #D6D2CB;border-radius:7px;padding:10px 12px}
+.t-guide p{margin:4px 0 0;font-size:16px;line-height:1.3}
+.t-signed{border-top:1px solid #D6D2CB;padding-top:8px}
+.t-acct{font:13px var(--mono)}
+.t-link{font:13px var(--font);color:#BD5D29;background:none;border:0;padding:0;cursor:pointer}
+.t-main{padding:16px;padding-right:max(16px,env(safe-area-inset-right,0px));min-width:0}
+.t-empty{color:#6B7180;font-size:13px;padding:10px}
+.t-views{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:14px;align-items:start}
+.t-views.stacked,.t-views.analysis{grid-template-columns:minmax(0,1fr)}
+.t-panel{background:#FFFFFF;border:1px solid #D6D2CB;border-radius:9px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.t-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.t-title{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#6B7180;font-weight:700;margin-right:4px}
+.t-lbl{font-size:12px;color:#6B7180}
+.t-grp{display:inline-flex;border:1px solid #D6D2CB;border-radius:5px;overflow:hidden}
+.t-grp button,.t-bar>button{font:12px var(--mono);padding:4px 8px;border:0;border-right:1px solid #E6E2DC;background:#FFFFFF;color:#1F2430;cursor:pointer}
+.t-bar>button{border:1px solid #D6D2CB;border-radius:5px}
+.t-grp button:last-child{border-right:0}
+.t-grp button[aria-pressed="true"]{background:#1F2430;color:#FFFFFF}
+.t-right{margin-left:auto}
+.t-status{display:flex;align-items:center;gap:10px;font:12px var(--mono);color:#3F7A4A}
+.t-status.replay{color:#BD5D29}
+.t-track{position:relative;flex:1;height:4px;background:#ECE8E2;border-radius:2px}
+.t-fill{position:absolute;left:0;top:0;bottom:0;background:#BD5D29;border-radius:2px}
+.t-knob{position:absolute;top:-4px;width:12px;height:12px;margin-left:-6px;border-radius:50%;background:#BD5D29}
+.t-wf{display:block;width:100%;height:clamp(300px,58vh,640px);border:2px solid #BD5D29;border-radius:7px;cursor:crosshair}
+.t-views.analysis .t-wf{height:clamp(200px,32vh,320px)}
+.t-map{display:block;width:100%;height:clamp(300px,64vh,700px);border-radius:6px;cursor:pointer}
+.t-views.stacked .t-map{height:clamp(240px,40vh,420px)}
+.t-bottom input[type=range]{width:90px;accent-color:#BD5D29}
+.t-bottom select{font:12px var(--mono);padding:3px 4px}
+.t-read{margin-left:auto;font:12px var(--mono);background:#F3F1EE;border-radius:4px;padding:4px 8px;color:#1F2430}
+.t-wave{display:block;width:100%;height:150px}
+.t-stft{display:block;width:100%;height:170px}
+@media (max-width:820px){
+  .t-app{grid-template-columns:minmax(0,1fr)}
+  .t-side{border-right:0;border-bottom:1px solid #D6D2CB}
+  .t-guide{margin-top:0}
+  .t-views{grid-template-columns:minmax(0,1fr)}
+  .t-wf{height:340px}.t-map{height:300px}
+  .tenant .t-close{position:sticky;display:block;margin-left:auto;margin-right:12px}
+}
+
+</style>
+<link rel="stylesheet" href="/how-it-works/site.css">
+
+</head>
+<body>
+
+<div class="app">
+  <header class="site-header">
+    <div class="site-brand">
+      <a class="home-link" href="/" aria-label="CoFiber home"><img class="logo" src="/cofiber-horizontal-reversed.svg" alt="CoFiber" width="112" height="36"></a>
+      <div class="site-heading"><h1>From fiber to tenant</h1><p>FiberVM · CoFiber’s sensing infrastructure platform</p></div>
+    </div>
+    <nav class="site-links" aria-label="Website"><a class="back-link" href="/">← Back to website</a><a class="access-link" href="/#contact">Request early access ↗</a></nav>
+  </header>
+  <section class="fallback" id="fallback" aria-labelledby="fallbackTitle">
+    <p class="eyebrow">How it works</p>
+    <h2 id="fallbackTitle">One fiber. Many applications.</h2>
+    <p>FiberVM is CoFiber’s sensing infrastructure platform. Follow the journey from light in a fiber to useful data for operators, developers, and researchers.</p>
+    <p class="fallback-note" id="fallbackStatus" role="status">This overview follows the same journey as the interactive story.</p>
+    <noscript><p>The interactive story needs JavaScript. This overview explains the same principles.</p></noscript>
+    <div class="fallback-grid">
+      <article><h3>01 · Fiber sensing</h3><p>An interrogator sends pulses of light along an optical fiber. Changes in the returning light reveal vibrations and their position along the route.</p></article>
+      <article><h3>02 · Shared infrastructure</h3><p>FiberVM brings access and acquisition into a shared infrastructure layer, delivering data at different resolutions to multiple applications.</p></article>
+      <article><h3>03 · The tenant experience</h3><p>Tenants explore their data streams through a waterfall view, a route map, and channel analysis. This demonstration uses synthetic data.</p></article>
+    </div>
+    <a class="access-link" href="/#contact">Talk to us about early access ↗</a>
+  </section>
+  <div class="bar">
+    <nav class="paths" aria-label="Explore the story">
+      <a href="#sensing" data-path="sensing"><span>01</span>Understand fiber sensing</a>
+      <a href="#cofiber" data-path="cofiber"><span>02</span>The CoFiber difference</a>
+      <a href="#tenant" data-path="tenant" id="btnTenant"><span>03</span>Explore the tenant demo</a>
+    </nav>
+    <div class="tools">
+      <div class="seg modeseg" role="group" aria-label="Model shown"><button class="btn" id="modeToday" type="button" aria-pressed="true">Today</button><button class="btn" id="modeVM" type="button" aria-pressed="false">With FiberVM</button></div>
+      <details class="view-options" id="viewOptions"><summary>View controls</summary><div class="view-menu">
+        <p>Camera &amp; display</p>
+        <div class="seg" role="group" aria-label="Drag action"><button class="btn touch-scroll" id="dragScroll" type="button" aria-pressed="false">Scroll page</button><button class="btn" id="dragRotate" type="button" aria-pressed="true">Rotate</button><button class="btn" id="dragPan" type="button" aria-pressed="false">Pan</button></div>
+        <button class="btn" id="btnPanels" type="button" aria-pressed="false">Hide panels</button>
+        <button class="btn" id="btnMotion" type="button" aria-pressed="false">Pause motion</button>
+        <button class="btn" id="btnLabels" type="button" aria-pressed="true">Hide labels</button>
+        <button class="btn" id="btnView" type="button">Reset view</button>
+      </div></details>
+    </div>
+  </div>
+  <main class="main">
+    <div class="stage" id="stage" aria-label="Interactive fiber sensing scene"><div class="labels" id="labels"></div>
+      <div class="navpad" role="group" aria-label="Move the view">
+        <span></span><button type="button" data-nav="up" aria-label="Pan forward" title="Pan forward (W)">▲</button><button type="button" data-nav="in" aria-label="Zoom in" title="Zoom in (+)">+</button>
+        <button type="button" data-nav="left" aria-label="Pan left" title="Pan left (A)">◀</button><button type="button" data-nav="home" aria-label="Reset view" title="Reset view">⌂</button><button type="button" data-nav="right" aria-label="Pan right" title="Pan right (D)">▶</button>
+        <span></span><button type="button" data-nav="down" aria-label="Pan back" title="Pan back (S)">▼</button><button type="button" data-nav="out" aria-label="Zoom out" title="Zoom out (−)">−</button>
+      </div><div class="demo-disclosure">Illustrative scene · synthetic data</div></div>
+    <div class="hint" id="hint">Drag to rotate · right-drag or Shift-drag to pan · scroll or pinch to zoom</div>
+    <div class="modebadge" id="modeBadge">Today</div>
+    <button class="tab tab-left" id="tabStory" type="button" hidden>Show story</button>
+    <button class="tab tab-right" id="tabSide" type="button" hidden>Show panel</button>
+    <section class="card story" id="story" aria-live="polite">
+      <div class="cardhead"><div class="eyebrow" id="stEyebrow">Step 1 of 8</div><button class="hidebtn" id="hideStory" type="button" aria-label="Hide the story panel">Hide</button></div>
+      <h2 id="stTitle" tabindex="-1"></h2>
+      <div class="body" id="stBody"></div>
+      <div class="storynav">
+        <div class="dots" id="stDots"></div>
+        <button class="btn" id="stPrev" type="button">Previous</button>
+        <button class="btn primary" id="stNext" type="button">Next</button>
+      </div>
+    </section>
+    <aside class="card side" id="side" aria-label="Waterfall view">
+      <div class="cardhead"><div class="eyebrow">Waterfall</div><button class="hidebtn" id="hideSide" type="button" aria-label="Hide the waterfall panel">Hide</button></div>
+      <div class="pview" id="pWf">
+        <div class="wfname" id="wfName"></div>
+        <canvas id="wf" aria-label="Waterfall view of the selected section"></canvas>
+        <div class="axis"><span>0 km</span><span>distance along the fiber</span><span id="wfEnd"></span></div>
+        <p class="cap">Synthetic signal. Time runs downward. Sections are selected in step 3.</p>
+      </div>
+    </aside>
+  </main>
+</div>
+<div id="cmpHold" hidden><div class="cmpbox" id="cmpBox">
+  <div class="count"><span>Solution providers</span><div class="stepper"><button class="btn" id="provMinus" type="button" aria-label="Remove a provider">−</button><output id="provN">5</output><button class="btn" id="provPlus" type="button" aria-label="Add a provider">+</button></div></div>
+  <div class="tbl-wrap"><table class="cmp" id="cmp"></table></div>
+  <p class="cap">Counts are illustrative and follow the number of providers selected above.</p>
+</div></div>
+
+<div class="tenant" id="tenant" hidden role="dialog" aria-modal="true" aria-label="FiberVM tenant interface">
+  <div class="tenant-actions">
+    <button class="t-close" id="tClose" type="button">← Back to the story</button>
+    <button class="t-close t-take" id="tTake" type="button" hidden>Explore it yourself</button>
+    <span class="demo-label">FiberVM demo · synthetic data</span>
+    <a class="access-link" href="/#contact">Request early access ↗</a>
+  </div>
+  <div class="t-cursor" id="tCursor" aria-hidden="true"><svg viewBox="0 0 20 24" width="22" height="26"><path d="M2 2 L2 19 L6.5 15 L9.5 22 L12.5 20.8 L9.6 14 L16 14 Z" fill="#1F2430" stroke="#FFFFFF" stroke-width="1.4"/></svg></div>
+  <div class="t-badge2" id="tTour" hidden>Guided tour · synthetic data</div>
+  <div class="t-signin" id="tSignin">
+    <div class="t-sbox">
+      <div class="t-brand"><svg viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="#C05A24"><path d="M 78.05 22.91 A 39 39 0 1 0 78.05 77.09" stroke-width="16"/><circle cx="50" cy="50" r="23" stroke-width="6"/><circle cx="50" cy="50" r="16.5" stroke-width="2"/><circle cx="50" cy="50" r="12.5" stroke-width="1.7"/><circle cx="50" cy="50" r="7" stroke-width="4"/></g></svg><span>FiberVM</span></div>
+      <h2>Explore the tenant demo</h2>
+      <p>Open a sample workspace to explore data streams, route maps, and channel analysis. No account needed.</p>
+      <form class="t-form" id="tForm">
+        <label for="tUser">Demo tenant</label><input id="tUser" value="demo-tenant" autocomplete="off" spellcheck="false" readonly>
+        <label for="tPass">Demo access</label><input id="tPass" type="password" value="demonstration" autocomplete="off" readonly>
+        <button class="t-btn" type="submit">Enter demo</button>
+      </form>
+      <p class="t-note">All signals and routes shown here are illustrative. No personal credentials are needed.</p>
+    </div>
+  </div>
+  <div class="t-app" id="tApp" hidden>
+    <aside class="t-side">
+      <div class="t-brand small"><svg viewBox="0 0 100 100" aria-hidden="true"><g fill="none" stroke="#C05A24"><path d="M 78.05 22.91 A 39 39 0 1 0 78.05 77.09" stroke-width="16"/><circle cx="50" cy="50" r="23" stroke-width="6"/><circle cx="50" cy="50" r="16.5" stroke-width="2"/><circle cx="50" cy="50" r="12.5" stroke-width="1.7"/><circle cx="50" cy="50" r="7" stroke-width="4"/></g></svg><span>FiberVM</span></div>
+      <div class="t-eyebrow">Stream access</div>
+      <div class="t-card"><div class="t-eyebrow">Subscription</div><div class="t-big" id="tSubN"></div><div class="t-mut" id="tSubM"></div></div>
+      <div class="t-card" id="tHead" hidden>
+        <div class="t-eyebrow" id="tHeadSite"></div>
+        <div class="t-pair"><div><div class="t-big" id="tHeadRate"></div><div class="t-cap">Sample rate</div></div><div><div class="t-big" id="tHeadDx"></div><div class="t-cap">Channel spacing</div></div></div>
+        <div class="t-chips"><span id="tHeadShape"></span><span id="tHeadState">receiving</span></div>
+        <div class="t-seg2"><button type="button" id="tOverview" aria-pressed="true">Overview</button><button type="button" id="tAnalysis" aria-pressed="false">Analysis</button></div>
+        <div class="t-seg2"><button type="button" id="tSide" aria-pressed="true">side by side</button><button type="button" id="tStack" aria-pressed="false">stacked</button></div>
+      </div>
+      <div id="tList"></div>
+      <div class="t-guide"><div class="t-eyebrow">FiberVM demo</div><p id="tGuide"></p></div>
+      <div class="t-signed"><div class="t-eyebrow">Signed in</div><div class="t-acct">demo-tenant</div><button type="button" class="t-link" id="tOut">Sign out</button></div>
+    </aside>
+    <main class="t-main">
+      <div class="t-empty" id="tEmpty">Select a stream from the left to begin.</div>
+      <div class="t-views" id="tViews" hidden>
+        <section class="t-panel t-wfp">
+          <div class="t-bar">
+            <span class="t-title">Waterfall</span>
+            <span class="t-grp"><button type="button" id="tLive" aria-pressed="true">● LIVE</button><button type="button" id="tReplay" aria-pressed="false">○ REPLAY</button></span>
+            <span class="t-grp"><button type="button" id="tBack">−10 s</button><button type="button" id="tPlay" aria-label="Pause">❚❚</button><button type="button" id="tFwd">+10 s</button></span>
+            <span class="t-lbl">speed</span><span class="t-grp" id="tSpeed"><button type="button" data-v="0.5">½×</button><button type="button" data-v="1" aria-pressed="true">1×</button><button type="button" data-v="2">2×</button><button type="button" data-v="4">4×</button></span>
+            <span class="t-lbl">window</span><span class="t-grp" id="tWin"><button type="button" data-v="10" aria-pressed="true">10 s</button><button type="button" data-v="30">30 s</button><button type="button" data-v="60">60 s</button></span>
+            <span class="t-lbl">units</span><span class="t-grp" id="tUnits"><button type="button" data-v="m" aria-pressed="true">m</button><button type="button" data-v="ft">ft</button></span>
+          </div>
+          <div class="t-status"><span id="tStatus"></span><div class="t-track"><div class="t-fill" id="tFill"></div><div class="t-knob" id="tKnob"></div></div><span id="tKept"></span></div>
+          <canvas class="t-wf" id="tWf" aria-label="Waterfall of the selected stream"></canvas>
+          <div class="t-bar t-bottom">
+            <span class="t-lbl">palette</span><select id="tPal" aria-label="Palette"><option value="inferno">inferno</option><option value="viridis">viridis</option><option value="gray">gray</option></select>
+            <label class="t-lbl" for="tLower">lower</label><input type="range" id="tLower" min="0" max="80" value="0">
+            <label class="t-lbl" for="tUpper">upper</label><input type="range" id="tUpper" min="40" max="300" value="160">
+            <button type="button" id="tAuto">auto</button>
+            <span class="t-read" id="tRead"></span>
+          </div>
+        </section>
+        <section class="t-panel t-mapp" id="tMapP">
+          <div class="t-bar"><span class="t-title">Route map</span><span class="t-grp"><button type="button" id="tZin" aria-label="Zoom in">+</button><button type="button" id="tZout" aria-label="Zoom out">−</button><button type="button" id="tZreset">reset</button></span>
+            <span class="t-grp" id="tOverlay"><button type="button" data-v="intensity" aria-pressed="true">intensity</button><button type="button" data-v="section">section</button></span>
+            <span class="t-grp" id="tStyle"><button type="button" data-v="gray">gray</button><button type="button" data-v="color" aria-pressed="true">color</button></span><span class="t-mut t-right" id="tMapInfo"></span></div>
+          <canvas class="t-map" id="tMap" aria-label="Route map with the selected point"></canvas>
+          <div class="t-cap">Imaginary route, illustrative only; not a real installation.</div>
+        </section>
+        <section class="t-panel t-ana" id="tAna" hidden>
+          <div class="t-bar"><span class="t-title" id="tChTitle">Channel waveform</span><span class="t-lbl">span</span><span class="t-grp" id="tSpan"><button type="button" data-v="1">1 s</button><button type="button" data-v="2" aria-pressed="true">2 s</button><button type="button" data-v="5">5 s</button></span>
+            <span class="t-lbl">FFT</span><span class="t-grp" id="tFft"><button type="button" data-v="128">128</button><button type="button" data-v="256" aria-pressed="true">256</button><button type="button" data-v="512">512</button></span><span class="t-mut t-right" id="tAnaInfo"></span></div>
+          <canvas class="t-wave" id="tWave" aria-label="Waveform of the selected channel"></canvas>
+          <div class="t-bar"><span class="t-title">STFT</span><span class="t-mut t-right" id="tStftInfo"></span></div>
+          <canvas class="t-stft" id="tStft" aria-label="Short-time Fourier transform of the selected channel"></canvas>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="/how-it-works/vendor/three.min.js"></script>
+<script src="/how-it-works/vendor/OrbitControls.js"></script>
+<script>
+(function(){
+'use strict';
+function showUnavailable(message){
+  document.body.classList.remove('demo-ready');
+  document.getElementById('fallbackStatus').textContent=message+' You can still explore the overview below or contact us.';
+}
+try {
+const stage=document.getElementById('stage');
+if(typeof THREE==='undefined'||!THREE.OrbitControls){showUnavailable('The interactive scene could not load. Please try refreshing the page.');return;}
+const V3=THREE.Vector3;
+const reduceMotion=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ORANGE=0xE07A3E,CYAN=0x5FD3F3;
+const rnd=(()=>{let s=23;return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646;};})();
+const fract=x=>x-Math.floor(x);
+const gauss=(x,m,s)=>{const d=(x-m)/s;return Math.exp(-0.5*d*d);};
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const ease=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
+const sstep=(a,b,x)=>{const k=clamp((x-a)/(b-a),0,1);return k*k*(3-2*k);};
+
+/* ---------- Renderer, scene, camera ---------- */
+let renderer;
+try{renderer=new THREE.WebGLRenderer({antialias:true});}catch(e){showUnavailable('The interactive scene needs WebGL, which is unavailable in this browser.');return;}
+document.body.classList.add('demo-ready');
+renderer.domElement.setAttribute('aria-label','3D fiber sensing scene. Use the story buttons or view controls to explore.');
+renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();showUnavailable('The 3D view was interrupted. Refresh the page to try again.');});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+stage.insertBefore(renderer.domElement,stage.firstChild);
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x0B1220);
+scene.fog=new THREE.Fog(0x0B1220,520,1500);
+const camera=new THREE.PerspectiveCamera(42,1,0.05,1800);
+camera.position.set(-5,320,300);
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;controls.dampingFactor=0.08;controls.maxPolarAngle=Math.PI*0.48;controls.minDistance=0.5;controls.maxDistance=700;
+controls.target.set(-25,0,-40);
+scene.add(new THREE.HemisphereLight(0xA8BBDA,0x0B1220,1.0));
+const sun=new THREE.DirectionalLight(0xffffff,0.6);sun.position.set(30,60,40);scene.add(sun);
+
+const DOT=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');
+  const gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,255,255,1)');gr.addColorStop(.3,'rgba(255,255,255,.85)');gr.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=gr;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);})();
+const mat=(color,emissive,ei)=>new THREE.MeshStandardMaterial({color,emissive:emissive||0,emissiveIntensity:ei||0,roughness:.75,metalness:.1});
+const basic=c=>new THREE.MeshBasicMaterial({color:c});
+
+/* ---------- Model library: low-poly vehicles, machinery and props built from primitives ---------- */
+const SHADOW=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d');
+  const gr=g.createRadialGradient(32,32,4,32,32,32);gr.addColorStop(0,'rgba(0,0,0,.6)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);return new THREE.CanvasTexture(c);})();
+const M={
+  paint:c=>new THREE.MeshStandardMaterial({color:c,metalness:.45,roughness:.38}),
+  glass:new THREE.MeshStandardMaterial({color:0x16202F,metalness:.8,roughness:.12}),
+  tire:new THREE.MeshStandardMaterial({color:0x15171C,roughness:.9}),
+  rim:new THREE.MeshStandardMaterial({color:0x9AA3B2,metalness:.7,roughness:.3}),
+  steel:new THREE.MeshStandardMaterial({color:0x5C6470,metalness:.6,roughness:.45}),
+  dark:new THREE.MeshStandardMaterial({color:0x24272E,roughness:.8}),
+  chrome:new THREE.MeshStandardMaterial({color:0xC8CED8,metalness:.9,roughness:.2}),
+  yellow:new THREE.MeshStandardMaterial({color:0xE2A92B,metalness:.25,roughness:.5}),
+  wood:new THREE.MeshStandardMaterial({color:0x5B4A3A,roughness:.9}),
+  porcelain:new THREE.MeshStandardMaterial({color:0xB9C7D6,roughness:.4}),
+  concrete:new THREE.MeshStandardMaterial({color:0x4E5564,roughness:1}),
+  head:new THREE.MeshBasicMaterial({color:0xFFF4D6}),
+  tail:new THREE.MeshBasicMaterial({color:0xFF3B30})
+};
+function part(p,geo,mt,x,y,z,rx,ry,rz){const m=new THREE.Mesh(geo,mt);m.position.set(x||0,y||0,z||0);if(rx)m.rotation.x=rx;if(ry)m.rotation.y=ry;if(rz)m.rotation.z=rz;p.add(m);return m;}
+const box=(p,w,h,d,mt,x,y,z)=>part(p,new THREE.BoxGeometry(w,h,d),mt,x,y,z);
+const cyl=(p,rt,rb,h,mt,x,y,z,rx,ry,rz)=>part(p,new THREE.CylinderGeometry(rt,rb,h,16),mt,x,y,z,rx,ry,rz);
+function wheel(p,r,w,x,y,z){cyl(p,r,r,w,M.tire,x,y,z,0,0,Math.PI/2);cyl(p,r*.55,r*.55,w+.02,M.rim,x,y,z,0,0,Math.PI/2);}
+/* side profile (first coordinate along the length, second up) extruded across the width; the length ends up along +z */
+function profile(pts,width,mt){const s=new THREE.Shape();s.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)s.lineTo(pts[i][0],pts[i][1]);s.closePath();
+  const g=new THREE.ExtrudeGeometry(s,{depth:width,bevelEnabled:false});g.translate(0,0,-width/2);g.rotateY(-Math.PI/2);return new THREE.Mesh(g,mt);}
+function blob(p,w,l,z){const m=new THREE.Mesh(new THREE.PlaneGeometry(w,l),new THREE.MeshBasicMaterial({map:SHADOW,transparent:true,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.set(0,0.03,z||0);p.add(m);return m;}
+function crawler(p,x,len){const tr=new THREE.Group();tr.position.x=x;p.add(tr);box(tr,0.38,0.34,len,M.dark,0,0.2,0);
+  [-len/2,len/2].forEach(z=>cyl(tr,0.17,0.17,0.38,M.dark,0,0.2,z,0,0,Math.PI/2));
+  const n=Math.round(len/0.22);for(let k=0;k<=n;k++)box(tr,0.4,0.04,0.11,M.steel,0,0.385,-len/2+k*len/n);return tr;}
+function makeCar(color){const g=new THREE.Group(),pt=M.paint(color);
+  g.add(profile([[-0.95,0.2],[0.95,0.2],[0.95,0.42],[0.88,0.55],[0.45,0.6],[0.2,0.9],[-0.45,0.9],[-0.72,0.62],[-0.95,0.58]],0.82,pt));
+  g.add(profile([[0.38,0.6],[0.18,0.86],[-0.42,0.86],[-0.66,0.62]],0.86,M.glass));
+  g.add(profile([[0.475,0.6],[0.235,0.885],[-0.48,0.885],[-0.745,0.62]],0.72,M.glass));
+  [0.6,-0.58].forEach(z=>[-0.39,0.39].forEach(x=>wheel(g,0.17,0.13,x,0.17,z)));
+  [-0.28,0.28].forEach(x=>{box(g,0.16,0.07,0.03,M.head,x,0.47,0.96);box(g,0.16,0.06,0.03,M.tail,x,0.5,-0.96);});
+  blob(g,1.3,2.3);return g;}
+function makeTruck(){const g=new THREE.Group(),cabP=M.paint(0xB8433A),trl=M.paint(0xD5DAE2);
+  box(g,0.86,1.05,2.8,trl,0,1.0,-0.55);box(g,0.7,0.12,2.6,M.dark,0,0.38,-0.55);
+  [-1.55,-1.85].forEach(z=>[-0.33,0.33].forEach(x=>wheel(g,0.18,0.16,x,0.18,z)));
+  box(g,0.7,0.14,1.3,M.dark,0,0.34,1.3);
+  const cab=profile([[-0.5,0.38],[0.5,0.38],[0.55,0.7],[0.45,1.2],[-0.5,1.25]],0.86,cabP);cab.position.z=1.5;g.add(cab);
+  box(g,0.78,0.34,0.03,M.glass,0,0.97,2.0).rotation.x=-0.2;box(g,0.88,0.28,0.4,M.glass,0,1.02,1.72);
+  box(g,0.74,0.14,0.04,M.chrome,0,0.5,2.05);[-0.3,0.3].forEach(x=>box(g,0.12,0.08,0.03,M.head,x,0.62,2.06));
+  [1.85,1.1].forEach(z=>[-0.36,0.36].forEach(x=>wheel(g,0.18,0.16,x,0.18,z)));
+  blob(g,1.3,4.6,0.2);return g;}
+function bogie(p,z){box(p,1.0,0.16,0.95,M.dark,0,0.32,z);[-0.3,0.3].forEach(dz=>[-0.55,0.55].forEach(x=>wheel(p,0.2,0.08,x,0.2,z+dz)));}
+function underframe(p,len){box(p,1.25,0.16,len,M.dark,0,0.5,0);bogie(p,-len*0.32);bogie(p,len*0.32);}
+function makeLoco(){const g=new THREE.Group(),liv=M.paint(0x2F5A8A),stripe=M.paint(0xE2A92B);underframe(g,2.0);
+  box(g,1.0,0.62,1.2,liv,0,0.89,-0.38);box(g,1.02,0.08,1.22,stripe,0,0.72,-0.38);
+  box(g,1.3,0.8,0.62,liv,0,0.98,0.58);box(g,1.36,0.06,0.7,M.dark,0,1.41,0.58);
+  box(g,1.32,0.22,0.4,M.glass,0,1.16,0.58);box(g,1.0,0.24,0.02,M.glass,0,1.16,0.9);
+  box(g,1.0,0.36,0.18,liv,0,0.76,0.98);box(g,0.14,0.08,0.02,M.head,0,0.82,1.08);
+  cyl(g,0.24,0.24,0.6,M.steel,0,0.34,0,Math.PI/2);box(g,0.5,0.1,0.5,M.dark,0,1.25,-0.6);
+  blob(g,1.6,2.4);return g;}
+function makeBoxcar(c){const g=new THREE.Group();underframe(g,1.95);box(g,1.3,1.0,1.95,M.paint(c),0,1.08,0);box(g,1.34,0.05,1.99,M.dark,0,1.6,0);
+  const door=M.paint(new THREE.Color(c).multiplyScalar(0.7));[-1,1].forEach(s=>box(g,0.02,0.82,0.62,door,s*0.66,1.05,0));blob(g,1.6,2.3);return g;}
+function makeTank(){const g=new THREE.Group(),pt=M.paint(0xC9CFD8);underframe(g,1.9);cyl(g,0.52,0.52,1.6,pt,0,1.1,0,Math.PI/2);
+  [-0.8,0.8].forEach(z=>{const s=part(g,new THREE.SphereGeometry(0.52,16,10),pt,0,1.1,z);s.scale.z=0.35;});
+  cyl(g,0.17,0.17,0.2,pt,0,1.68,0);box(g,1.2,0.04,0.3,M.dark,0,1.63,0);blob(g,1.6,2.3);return g;}
+function makeHopper(c){const g=new THREE.Group();underframe(g,1.9);
+  g.add(profile([[-0.95,1.55],[0.95,1.55],[0.95,1.05],[0.5,0.62],[-0.5,0.62],[-0.95,1.05]],1.28,M.paint(c)));
+  [-0.45,0,0.45].forEach(z=>box(g,1.3,0.05,0.06,M.dark,0,1.56,z));blob(g,1.6,2.3);return g;}
+function makeExcavator(){const g=new THREE.Group();crawler(g,-0.62,1.7);crawler(g,0.62,1.7);box(g,0.9,0.25,1.1,M.dark,0,0.45,0);
+  const house=new THREE.Group();house.position.y=0.6;g.add(house);
+  box(house,1.45,0.42,1.6,M.yellow,0,0.21,-0.05);box(house,1.45,0.45,0.32,M.dark,0,0.32,-0.84);
+  box(house,0.75,0.3,0.75,M.yellow,0.3,0.57,-0.45);box(house,0.6,0.14,0.02,M.steel,0.3,0.55,-0.83);
+  cyl(house,0.04,0.04,0.35,M.dark,0.55,0.85,-0.55);
+  box(house,0.62,0.85,0.75,M.yellow,-0.38,0.84,0.35);box(house,0.64,0.48,0.6,M.glass,-0.38,0.96,0.38);
+  box(house,0.5,0.55,0.02,M.glass,-0.38,0.94,0.73);box(house,0.66,0.05,0.8,M.dark,-0.38,1.29,0.35);
+  const boomP=new THREE.Group();boomP.position.set(0.22,0.5,0.55);house.add(boomP);
+  box(boomP,0.24,0.28,1.9,M.yellow,0,0,0.95);cyl(boomP,0.05,0.05,1.0,M.chrome,0,0.22,0.55,Math.PI/2);
+  const stickP=new THREE.Group();stickP.position.set(0,0,1.9);boomP.add(stickP);
+  box(stickP,0.18,0.2,1.35,M.yellow,0,0,0.67);cyl(stickP,0.04,0.04,0.8,M.chrome,0,0.16,0.4,Math.PI/2);
+  const bucketP=new THREE.Group();bucketP.position.set(0,0,1.35);stickP.add(bucketP);
+  bucketP.add(profile([[0,0.05],[0.32,0],[0.45,-0.28],[0.3,-0.48],[0.04,-0.42],[-0.04,-0.18]],0.55,M.dark));
+  [-0.18,-0.06,0.06,0.18].forEach(x=>box(bucketP,0.06,0.08,0.12,M.steel,x,-0.5,0.3));
+  blob(g,2.2,2.6);
+  return {g,animate(d,t){house.rotation.y=0.2*Math.sin(t*0.4);boomP.rotation.x=-0.25-0.35*(1-d);stickP.rotation.x=0.9+0.6*d;bucketP.rotation.x=0.2+0.9*d;}};}
+function makeHDD(){const g=new THREE.Group();crawler(g,-0.72,2.6);crawler(g,0.72,2.6);
+  box(g,1.7,0.3,2.9,M.yellow,0,0.55,0);box(g,1.4,0.8,0.9,M.yellow,0,1.1,-1.0);box(g,1.0,0.3,0.02,M.steel,0,1.15,-1.46);
+  box(g,0.55,0.8,0.6,M.yellow,-0.55,1.1,0.15);box(g,0.57,0.4,0.5,M.glass,-0.55,1.2,0.17);
+  for(let k=0;k<6;k++)cyl(g,0.05,0.05,2.2,M.steel,0.58+(k%3)*0.11,0.76+Math.floor(k/3)*0.1,0.3,Math.PI/2);
+  const mast=new THREE.Group();mast.position.set(0.25,1.55,-1.2);mast.rotation.x=0.27;g.add(mast);
+  [-0.18,0.18].forEach(x=>box(mast,0.1,0.14,3.7,M.steel,x,0,1.85));box(mast,0.46,0.06,3.7,M.dark,0,-0.08,1.85);
+  const carriage=box(mast,0.5,0.36,0.5,M.yellow,0,0.2,0.6);box(mast,0.55,0.3,0.3,M.dark,0,0.05,3.55);
+  cyl(mast,0.07,0.07,5.0,M.chrome,0,0.12,3.1,Math.PI/2);
+  blob(g,2.2,3.6);
+  return {g,animate(t){carriage.position.z=0.5+2.6*fract(t*0.12);}};}
+function makePerson(shirt,pants){const g=new THREE.Group();
+  const sk=new THREE.MeshStandardMaterial({color:0xC8A07E,roughness:.8}),sh=new THREE.MeshStandardMaterial({color:shirt,roughness:.8}),pa=new THREE.MeshStandardMaterial({color:pants,roughness:.9});
+  const hip=new THREE.Group();hip.position.y=0.9;g.add(hip);
+  const legs=[-0.1,0.1].map(x=>{const L=new THREE.Group();L.position.x=x;hip.add(L);cyl(L,0.07,0.06,0.85,pa,0,-0.43,0);box(L,0.11,0.07,0.22,M.dark,0,-0.87,0.05);return L;});
+  const torso=new THREE.Group();hip.add(torso);
+  box(torso,0.38,0.6,0.22,sh,0,0.32,0);part(torso,new THREE.SphereGeometry(0.12,14,10),sk,0,0.77,0);
+  const arms=[-0.25,0.25].map(x=>{const A=new THREE.Group();A.position.set(x,0.58,0);torso.add(A);cyl(A,0.05,0.045,0.62,sh,0,-0.3,0);return A;});
+  blob(g,0.9,0.9);g.scale.setScalar(0.6);
+  return {g,legs,arms,torso,walk(ph,amp){legs[0].rotation.x=Math.sin(ph)*amp;legs[1].rotation.x=-Math.sin(ph)*amp;arms[0].rotation.x=-Math.sin(ph)*amp*0.8;arms[1].rotation.x=Math.sin(ph)*amp*0.8;torso.rotation.x=0;}};}
+function quadWalk(legs,ph,amp){const a=Math.sin(ph)*amp;legs[0].rotation.x=a;legs[3].rotation.x=a;legs[1].rotation.x=-a;legs[2].rotation.x=-a;}
+function makeMoose(){const g=new THREE.Group();
+  const fur=new THREE.MeshStandardMaterial({color:0x4A3426,roughness:.95}),dk=new THREE.MeshStandardMaterial({color:0x2E2118,roughness:.95}),ant=new THREE.MeshStandardMaterial({color:0xBFA27A,roughness:.8});
+  part(g,new THREE.SphereGeometry(0.5,16,12),fur,0,1.45,0).scale.set(0.9,1.0,2.0);
+  part(g,new THREE.SphereGeometry(0.35,12,10),fur,0,1.78,0.45).scale.set(1,1,1.4);
+  box(g,0.3,0.5,0.45,fur,0,1.78,0.98).rotation.x=-0.5;box(g,0.28,0.3,0.7,dk,0,1.78,1.38).rotation.x=0.45;
+  [-1,1].forEach(k=>{box(g,0.6,0.05,0.32,ant,k*0.42,2.14,1.12).rotation.z=k*0.35;});
+  const legs=[[-0.25,0.7],[0.25,0.7],[-0.25,-0.75],[0.25,-0.75]].map(([x,z])=>{const L=new THREE.Group();L.position.set(x,1.15,z);g.add(L);cyl(L,0.07,0.05,1.15,dk,0,-0.57,0);return L;});
+  blob(g,1.4,2.6);g.scale.setScalar(0.62);return {g,walk(ph){quadWalk(legs,ph,0.45);}};}
+function makeElephant(sc){const g=new THREE.Group();
+  const sk=new THREE.MeshStandardMaterial({color:0x7D7F86,roughness:.95}),ear=new THREE.MeshStandardMaterial({color:0x6E7077,roughness:.95,side:THREE.DoubleSide}),iv=new THREE.MeshStandardMaterial({color:0xEDE6D6});
+  part(g,new THREE.SphereGeometry(1,20,14),sk,0,2.1,0).scale.set(1.05,0.95,1.5);
+  part(g,new THREE.SphereGeometry(0.62,16,12),sk,0,2.55,1.55);
+  [-1,1].forEach(k=>{const e=part(g,new THREE.CircleGeometry(0.62,18),ear,k*0.55,2.55,1.3);e.rotation.y=k*1.2;e.scale.y=1.25;});
+  cyl(g,0.2,0.16,0.7,sk,0,2.15,2.05,0.35);cyl(g,0.16,0.12,0.7,sk,0,1.55,2.2,0.1);cyl(g,0.12,0.1,0.5,sk,0,1.0,2.28,-0.25);
+  [-1,1].forEach(k=>part(g,new THREE.ConeGeometry(0.06,0.6,8),iv,k*0.22,1.95,2.0,1.9));
+  const legs=[[-0.5,0.8],[0.5,0.8],[-0.5,-0.8],[0.5,-0.8]].map(([x,z])=>{const L=new THREE.Group();L.position.set(x,1.45,z);g.add(L);cyl(L,0.26,0.24,1.45,sk,0,-0.72,0);return L;});
+  blob(g,2.6,3.8);g.scale.setScalar(sc);return {g,walk(ph){quadWalk(legs,ph,0.3);}};}
+function makeTree(x,z,s,burnt){const g=new THREE.Group();g.position.set(x,0,z);g.scale.setScalar(s);
+  cyl(g,0.07,0.1,0.7,M.wood,0,0.35,0);
+  const leaf=burnt?new THREE.MeshStandardMaterial({color:0x2A1E16,flatShading:true}):new THREE.MeshStandardMaterial({color:[0x1F4A33,0x24553A,0x1C4430][Math.floor(rnd()*3)],flatShading:true});
+  [[0.75,1.1,1.0],[0.58,0.95,1.45],[0.4,0.8,1.85]].slice(0,burnt?2:3).forEach(c=>part(g,new THREE.ConeGeometry(c[0],c[1],7),leaf,0,c[2],0));
+  scene.add(g);return g;}
+
+
+function sprite(color){const s=new THREE.Sprite(new THREE.SpriteMaterial({map:DOT,color,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));scene.add(s);return s;}
+function pointsCloud(n,color,size){const g=new THREE.BufferGeometry(),arr=new Float32Array(n*3);g.setAttribute('position',new THREE.BufferAttribute(arr,3));
+  const m=new THREE.PointsMaterial({color,size,map:DOT,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending});
+  const pts=new THREE.Points(g,m);pts.frustumCulled=false;scene.add(pts);return {pts,arr,m,g};}
+/* the tube mesh sits at the centre of its points, so that transparent strands are sorted by their real position */
+function polyTube(pts,r,m){const cp=new THREE.CurvePath();for(let i=0;i<pts.length-1;i++)cp.add(new THREE.LineCurve3(pts[i],pts[i+1]));
+  const ctr=pts.reduce((a,p)=>a.add(p),new V3()).multiplyScalar(1/pts.length),g=new THREE.TubeGeometry(cp,Math.max(8,pts.length*10),r,6,false);g.translate(-ctr.x,-ctr.y,-ctr.z);
+  const mesh=new THREE.Mesh(g,m);mesh.position.copy(ctr);return {curve:cp,mesh};}
+
+/* ---------- Labels ---------- */
+const labelsEl=document.getElementById('labels');const labels=[];
+function addLabel(pos,html,cls,opt){opt=opt||{};const el=document.createElement('div');el.className='tag '+(cls||'');el.innerHTML=html;labelsEl.appendChild(el);
+  const L={el,pos,anchor:opt.anchor||'above',show:true,html,far:opt.far||0,near:opt.near||0};labels.push(L);return L;}
+function setLabel(L,html){if(L.html!==html){L.html=html;L.el.innerHTML=html;}}
+
+/* ---------- CoFiber logo as a texture, drawn from the header logo ---------- */
+function logoTexture(w,h,bg){const c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.fillStyle=bg||'#141E2E';g.fillRect(0,0,w,h);
+  const t=new THREE.CanvasTexture(c);const im=new Image();im.onload=()=>{const s=Math.min((w*0.9)/310,(h*0.8)/100);g.drawImage(im,(w-310*s)/2,(h-100*s)/2,310*s,100*s);t.needsUpdate=true;};
+  const el=document.querySelector('.logo');if(el)im.src=el.src;return t;}
+const LOGO_TEX=logoTexture(1024,330);
+
+/* ---------- Helpers for curves and ground strips ---------- */
+function nrm(c,u){const t=c.getTangentAt(u);const l=Math.hypot(t.x,t.z)||1;return new V3(-t.z/l,0,t.x/l);}
+function sideOf(c,u,off,y){const p=c.getPointAt(u),n=nrm(c,u);return new V3(p.x+n.x*off,y==null?p.y:y,p.z+n.z*off);}
+function strip(c,off,width,y,color,op,n){n=n||200;op=op==null?1:op;const pos=new Float32Array((n+1)*6),idx=[];
+  for(let i=0;i<=n;i++){const u=i/n,p=c.getPointAt(u),nn=nrm(c,u),cx=p.x+nn.x*off,cz=p.z+nn.z*off,h=width/2;pos.set([cx-nn.x*h,y,cz-nn.z*h,cx+nn.x*h,y,cz+nn.z*h],i*6);if(i<n){const a=i*2;idx.push(a,a+1,a+2,a+1,a+3,a+2);}}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setIndex(idx);
+  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color,side:THREE.DoubleSide,transparent:op<1,opacity:op,depthWrite:op>=1}));scene.add(m);return m;}
+const curve=pts=>new THREE.CatmullRomCurve3(pts.map(a=>a.length>2?new V3(a[0],a[1],a[2]):new V3(a[0],0.06,a[1])),false,'centripetal');
+const hill=(x,z,r,h,color)=>{const m=new THREE.Mesh(new THREE.ConeGeometry(r,h,9),new THREE.MeshStandardMaterial({color:color||0x2B3346,flatShading:true,roughness:1}));m.position.set(x,h/2,z);scene.add(m);return m;};
+const flat=(w,d,x,z,color,y)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),new THREE.MeshStandardMaterial({color,roughness:1}));m.rotation.x=-Math.PI/2;m.position.set(x,y||0.03,z);scene.add(m);return m;};
+
+/* ---------- Town: ground, river, streets and districts ---------- */
+const KM_PER_UNIT=0.02;
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(900,760),new THREE.MeshStandardMaterial({color:0x121D2B,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.set(-20,0,-30);scene.add(ground);
+flat(150,110,25,-5,0x161F2E);flat(60,95,72,40,0x15211F);flat(46,46,-70,42,0x14231C);
+/* river with a reservoir behind a dam to the north */
+const RIVER=curve([[-24,-150],[-28,-120],[-26,-60],[-25,-1],[-27,60],[-24,140],[-20,230]]);strip(RIVER,0,11,0.05,0x1D4F78,1,160);
+const resv=new THREE.Mesh(new THREE.BoxGeometry(70,7.2,62),new THREE.MeshStandardMaterial({color:0x1D4F78,roughness:.3,metalness:.2}));resv.position.set(-25,3.6,-185);scene.add(resv);
+const concM=new THREE.MeshStandardMaterial({color:0x8A919C,roughness:.9});
+const dam=new THREE.Mesh((()=>{const s=new THREE.Shape();[[-1.2,8.2],[1.2,8.2],[7,0],[-2,0]].forEach((p,i)=>i?s.lineTo(p[0],p[1]):s.moveTo(p[0],p[1]));s.closePath();
+  const g=new THREE.ExtrudeGeometry(s,{depth:52,bevelEnabled:false});g.translate(0,0,-26);g.rotateY(-Math.PI/2);return g;})(),concM);dam.position.set(-25,0,-150.8);scene.add(dam);
+hill(-62,-160,16,18);hill(12,-160,16,17);hill(-70,-205,20,22);hill(22,-205,22,20);hill(-25,-235,30,20);
+const spill=pointsCloud(150,0xE6F2FF,0.55);
+/* streets */
+const asphalt=0x222A3A,lane=0x8A93A6;
+const road=(pts,w,dashed)=>{const c=curve(pts);strip(c,0,w,0.04,asphalt,1,120);if(dashed)strip(c,0,0.18,0.06,lane,1,120);return c;};
+const MAIN=road([[-43,1.5],[-20,1.5],[10,1.5],[40,1.5],[62,1.5]],5,true);
+/* road bridges: a raised deck with smooth approach ramps, so that vehicles climb and descend instead of stepping */
+const bridgeProf=(d,half,ramp,H)=>{const a=Math.abs(d);if(a<=half)return H;if(a>=half+ramp)return 0;const k=(a-half)/ramp;return H*(1-k*k*(3-2*k));};
+function deckAlong(c,s0,s1,yAt,width,n){const topP=[],sideP=[],ti=[],si=[],railL=[],railR=[];
+  for(let i=0;i<=n;i++){const sv=s0+(s1-s0)*i/n,p=c.getPointAt(sv),nn=nrm(c,sv),y=yAt(sv),h=width/2,yb=Math.max(0.02,y-0.4);
+    const lx=p.x-nn.x*h,lz=p.z-nn.z*h,rx=p.x+nn.x*h,rz=p.z+nn.z*h;
+    topP.push(lx,y+0.07,lz,rx,y+0.07,rz);sideP.push(lx,y+0.07,lz,lx,yb,lz,rx,y+0.07,rz,rx,yb,rz);
+    railL.push(new V3(lx,y+0.6,lz));railR.push(new V3(rx,y+0.6,rz));
+    if(i%3===0)[[lx,lz],[rx,rz]].forEach(([x,z])=>cyl(scene,0.05,0.05,0.55,M.steel,x,y+0.33,z));
+    if(i<n){const a=i*2;ti.push(a,a+1,a+2,a+1,a+3,a+2);const b=i*4;si.push(b,b+1,b+4,b+1,b+5,b+4,b+2,b+3,b+6,b+3,b+7,b+6);}}
+  const mk=(arr,idx,m)=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(arr,3));g.setIndex(idx);g.computeVertexNormals();const me=new THREE.Mesh(g,m);scene.add(me);return me;};
+  mk(topP,ti,new THREE.MeshStandardMaterial({color:asphalt,roughness:.9,side:THREE.DoubleSide}));mk(sideP,si,new THREE.MeshStandardMaterial({color:0xA9B0BC,roughness:.85,side:THREE.DoubleSide}));
+  [railL,railR].forEach(r=>scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(r),new THREE.LineBasicMaterial({color:0xC9CED8}))));}
+const MB={x:-25,half:7,ramp:8,H:0.9};const mainBridgeY=x=>bridgeProf(x-MB.x,MB.half,MB.ramp,MB.H);
+{const c=curve([[-44,1.5],[-6,1.5]]),L=c.getLength();deckAlong(c,0,1,sv=>mainBridgeY(-44+sv*L),7,60);
+  [-29,-21].forEach(x=>box(scene,0.7,MB.H-0.35,6,concM,x,(MB.H-0.35)/2,1.5));}
+[0,20,40].forEach(x=>road([[x,-42],[x,34]],4,false));[-21,21].forEach(z=>road([[-4,z],[60,z]],4,false));
+const AVE=road([[60,4],[60,40],[60,70],[60,92]],5,true);[32,56,78].forEach(z=>road([[42,z],[96,z]],3.5,false));
+const HWY=road([[103,170],[103,60],[103,-40],[103,-230]],12,true);
+road([[62,1.5],[103,1.5]],5,true);
+/* hill road: leaves the highway at a junction, crosses the railway, follows the fiber through the hills, passes the data center
+   and the front of the fiber owner's building, and joins Main Street at the bridge */
+const ROAD=road([[97,-86],[80,-88.5],[50,-89],[20,-89],[6,-91],[-2,-97],[-5,-104],[-8,-112],[-15,-120],[-27,-125],[-40,-129],[-62,-135],[-82,-145],[-96,-155],[-106,-160],[-124,-153],[-139,-139],[-150,-120],[-155,-98],
+  [-156,-75],[-154,-55],[-148,-42],[-141,-29],[-138,-14],[-131,-2],[-116,1.5],[-95,1.5],[-70,1.5],[-43,1.5]],5,true);
+const RS=400,RPTS=[];for(let i=0;i<=RS;i++)RPTS.push(ROAD.getPointAt(i/RS));
+const roadD=(x,z)=>{let b=1e9;for(const p of RPTS){const d=(p.x-x)*(p.x-x)+(p.z-z)*(p.z-z);if(d<b)b=d;}return Math.sqrt(b);};
+const ROADL=ROAD.getLength();let HB_S=0;{let bd=1e9;for(let i=0;i<=RS;i++){const p=RPTS[i],d=Math.hypot(p.x+27.5,p.z+125.3);if(d<bd){bd=d;HB_S=i/RS;}}}
+const hillBridgeY=sv=>bridgeProf((sv-HB_S)*ROADL,6,7,0.8);
+deckAlong(ROAD,HB_S-14/ROADL,HB_S+14/ROADL,hillBridgeY,6,50);
+[-3,3].forEach(dd=>{const sv=HB_S+dd/ROADL,p=ROAD.getPointAt(sv),tg=ROAD.getTangentAt(sv);const m=box(scene,0.7,0.45,5.2,concM,p.x,0.22,p.z);m.rotation.y=Math.atan2(tg.x,tg.z);});
+box(scene,4,0.05,8,new THREE.MeshStandardMaterial({color:0x2E3546}),-5,0.075,-104);
+
+/* downtown buildings with lit windows */
+const winTex=(()=>{const c=document.createElement('canvas');c.width=64;c.height=128;const g=c.getContext('2d');g.fillStyle='#2A3346';g.fillRect(0,0,64,128);
+  for(let y=4;y<128;y+=10)for(let x=4;x<64;x+=10){g.fillStyle=Math.random()<0.38?'#F2D9A0':(Math.random()<0.5?'#3A4560':'#1E2638');g.fillRect(x,y,6,6);}
+  const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t;})();
+function tower(x,z,w,d,h,col){const t=winTex.clone();t.needsUpdate=true;t.repeat.set(Math.max(1,w/6),Math.max(1,h/12));
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),[new THREE.MeshStandardMaterial({map:t,emissive:0xffffff,emissiveMap:t,emissiveIntensity:0.55,roughness:.6}),new THREE.MeshStandardMaterial({map:t,emissive:0xffffff,emissiveMap:t,emissiveIntensity:0.55,roughness:.6}),
+    new THREE.MeshStandardMaterial({color:col||0x39435A}),new THREE.MeshStandardMaterial({color:0x2A3242}),new THREE.MeshStandardMaterial({map:t,emissive:0xffffff,emissiveMap:t,emissiveIntensity:0.55,roughness:.6}),new THREE.MeshStandardMaterial({map:t,emissive:0xffffff,emissiveMap:t,emissiveIntensity:0.55,roughness:.6})]);
+  m.position.set(x,h/2,z);scene.add(m);return m;}
+const OFFICE={x:30,z:10,w:12,d:12,h:34};
+[[2.5,17.5],[22.5,37.5],[42.5,57.5]].forEach(([x0,x1])=>[[-40,-23],[-19,-3.5],[4,19],[23,34]].forEach(([z0,z1])=>{
+  if(x0===22.5&&z0===4)return;if(x0===42.5&&z0===4)return;const n=1+Math.floor(rnd()*3);for(let k=0;k<n;k++){const w=(x1-x0)/n-1.2,cx=x0+(k+0.5)*(x1-x0)/n,h=5+rnd()*rnd()*24;tower(cx,(z0+z1)/2,w,(z1-z0)-2,h);}}));
+/* a glass office tower downtown */
+const glassM=new THREE.MeshStandardMaterial({color:0x6E9BD6,metalness:.6,roughness:.15,transparent:true,opacity:0.55});
+const officeT=new THREE.Mesh(new THREE.BoxGeometry(OFFICE.w,OFFICE.h,OFFICE.d),glassM);officeT.position.set(OFFICE.x,OFFICE.h/2,OFFICE.z);scene.add(officeT);
+const mullM=new THREE.MeshBasicMaterial({color:0x9DB8D8,transparent:true,opacity:0.5});
+for(let y=3;y<OFFICE.h;y+=3)box(scene,OFFICE.w+0.1,0.12,OFFICE.d+0.1,mullM,OFFICE.x,y,OFFICE.z);
+const monCv=document.createElement('canvas');monCv.width=1024;monCv.height=620;const monG=monCv.getContext('2d');const monTex=new THREE.CanvasTexture(monCv);
+/* suburbs */
+const houseRoofM=[0x6B3F35,0x4E5766,0x5B4A3A,0x3F5A4A].map(c=>new THREE.MeshStandardMaterial({color:c,flatShading:true}));
+function house(x,z,rot){const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=rot||0;scene.add(g);
+  box(g,3.2,2,3,new THREE.MeshStandardMaterial({color:[0xC9C2B4,0xA9B4C2,0xD8CFC0,0x9AA79A][Math.floor(rnd()*4)]}),0,1,0);
+  const r=new THREE.Mesh(new THREE.ConeGeometry(2.6,1.4,4),houseRoofM[Math.floor(rnd()*4)]);r.position.y=2.7;r.rotation.y=Math.PI/4;r.scale.set(1,1,0.85);g.add(r);
+  if(rnd()<0.5)box(g,0.7,0.6,0.05,new THREE.MeshBasicMaterial({color:0xF2D9A0}),0.6,1.1,1.53);return g;}
+[32,56,78].forEach(z=>{for(let x=66;x<96;x+=6.5){house(x,z-4.5,0);if(z<78)house(x,z+4.5,Math.PI);}});
+for(let z=12;z<90;z+=7){house(54,z,Math.PI/2);if(z>30)house(46,z,-Math.PI/2);}
+for(let k=0;k<70;k++){const x=40+rnd()*58,z=8+rnd()*68;if(Math.abs(x-60)<4||[32,56,78].some(r=>Math.abs(z-r)<3))continue;makeTree(x,z,0.6+rnd()*0.4,false);}
+for(let k=0;k<26;k++){makeTree(-92+rnd()*44,22+rnd()*40,0.8+rnd()*0.5,false);}
+/* energy corridor: buried pipeline with marker posts, and a power transmission line beside it */
+flat(200,10,60,88,0x1B2620);
+const pipeM=new THREE.MeshStandardMaterial({color:0x5D6E86,metalness:.45,roughness:.45});
+cyl(scene,0.45,0.45,200,pipeM,60,0.2,88,0,0,Math.PI/2);
+for(let x=-34;x<160;x+=10){cyl(scene,0.07,0.07,1.4,mat(0xE8C547),x,0.7,90.5);box(scene,0.34,0.22,0.06,mat(0xE07A3E),x,1.4,90.5);}
+box(scene,6,3,4,new THREE.MeshStandardMaterial({color:0x56607A}),30,1.5,92);cyl(scene,0.6,0.6,2,M.steel,26,1,90);
+const towerM=new THREE.MeshStandardMaterial({color:0x8A93A6,metalness:.4,roughness:.5,wireframe:false});
+const TX=[];for(let x=-40;x<=160;x+=25){TX.push(x);const g=new THREE.Group();g.position.set(x,0,97);scene.add(g);
+  const leg=new THREE.Mesh(new THREE.CylinderGeometry(0.25,1.6,11,4,1,true),new THREE.MeshBasicMaterial({color:0x8A93A6,wireframe:true}));leg.position.y=5.5;g.add(leg);
+  box(g,0.2,0.2,7,towerM,0,10,0);box(g,0.2,0.2,5,towerM,0,8,0);}
+const condM=new THREE.LineBasicMaterial({color:0x9AA3B2});
+const conductors=[[-3.4,10],[3.4,10],[-2.4,8],[2.4,8]].map(([o,y])=>{const g=new THREE.BufferGeometry();const line=new THREE.Line(g,condM);scene.add(line);return {o,y,g};});
+function swayConductors(t){conductors.forEach((c,ci)=>{const pts=[];for(let i=0;i<TX.length-1;i++)for(let k=0;k<=12;k++){const s=k/12,x=TX[i]+25*s,sw=0.25*Math.sin(t*1.3+i+ci)*4*s*(1-s);pts.push(new V3(x,c.y-1.6*4*s*(1-s),97+c.o+sw));}c.g.setFromPoints(pts);});}
+swayConductors(0);
+/* highway traffic */
+const hwyCars=[makeTruck(),makeCar(0xC9D2E0),makeTruck(),makeCar(0x8FA3C4)];
+const roadCars=[makeCar(0xE8C547),makeTruck()];roadCars.forEach(m=>{m.scale.setScalar(1.1);scene.add(m);});hwyCars.forEach(m=>{m.scale.setScalar(1.3);scene.add(m);});
+const mainCar=makeCar(0xD9DEE8);mainCar.scale.setScalar(1.1);scene.add(mainCar);
+/* rail line with a train */
+box(scene,420,0.04,4,new THREE.MeshStandardMaterial({color:0x1E2430}),-30,0.02,-104);
+const BRK=60;
+box(scene,420,0.12,0.12,M.steel,-30,0.14,-104.7);
+box(scene,BRK-0.2+240,0.12,0.12,M.steel,(-240+BRK-0.2)/2,0.14,-103.3);box(scene,180-BRK-0.2,0.12,0.12,M.steel,(BRK+0.2+180)/2,0.16,-103.25);
+const brkRing=new THREE.Mesh(new THREE.RingGeometry(1.2,1.45,40),new THREE.MeshBasicMaterial({color:0xE04B4B,transparent:true,opacity:0.8,side:THREE.DoubleSide,depthWrite:false}));brkRing.rotation.x=-Math.PI/2;brkRing.position.set(BRK,0.2,-103.3);scene.add(brkRing);
+const ties=new THREE.InstancedMesh(new THREE.BoxGeometry(0.25,0.08,2.4),mat(0x3A3F4A),300),dmy=new THREE.Object3D();for(let k=0;k<300;k++){dmy.position.set(-240+k*1.4,0.06,-104);dmy.updateMatrix();ties.setMatrixAt(k,dmy.matrix);}scene.add(ties);
+/* rail bridge: a through truss, so the train runs on the deck between the two truss walls */
+box(scene,17,0.06,4.6,concM,-25,0.03,-104);
+[-106.4,-101.6].forEach(z=>{const tm=mat(0x7E8794);box(scene,17,0.22,0.22,tm,-25,0.2,z);box(scene,13,0.22,0.22,tm,-25,2.6,z);
+  for(let k=0;k<=6;k++){const x=-31.5+k*2.1667;box(scene,0.16,2.4,0.16,tm,x,1.4,z);}
+  [-1,1].forEach(sg=>{const m=box(scene,0.18,3.3,0.18,tm,-25+sg*7.4,1.4,z);m.rotation.z=sg*0.62;});
+  for(let k=0;k<6;k++){const m=box(scene,0.12,3.1,0.12,tm,-30.4+k*2.1667,1.4,z);m.rotation.z=(k<3?1:-1)*0.72;}});
+for(let k=0;k<=4;k++)box(scene,0.14,0.14,4.8,mat(0x7E8794),-31+k*3,2.6,-104);
+/* level crossing of the hill road: flashing signals and barrier arms */
+const XING=[];[[-1.6,-107.6,1],[-8.4,-100.4,-1]].forEach(([x,z,sgn])=>{const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);
+  cyl(g,0.08,0.08,3,M.steel,0,1.5,0);[0.6,-0.6].forEach(r=>{box(g,1.4,0.18,0.06,mat(0xEEEEEE),0,2.7,0).rotation.z=r;});
+  const lamps=[-0.3,0.3].map(dx=>{const s=sprite(0xFF3B30);s.position.set(x+dx,2.1,z);s.scale.setScalar(0.9);return s;});
+  const arm=new THREE.Group();arm.position.set(0,1.1,0);g.add(arm);box(arm,0.12,0.12,4,mat(0xF2F2F2),0,0,-2*sgn);for(let k=0;k<3;k++)box(arm,0.14,0.14,0.45,mat(0xE04B4B),0,0,-sgn*(0.7+k*1.2));
+  XING.push({lamps,arm,sgn});});
+const train=[makeLoco(),makeBoxcar(0x7A4A32),makeTank(),makeHopper(0x4D5E52),makeBoxcar(0x56677F)];train.forEach(m=>{m.scale.setScalar(1.3);scene.add(m);});
+/* hills with hazards, north-west of the office */
+const cliff=hill(-105,-190,15,24,0x2E3647);hill(-140,-182,16,20);hill(-170,-150,14,18);hill(-80,-188,12,15);hill(-190,-70,12,12);
+/* low hills with homes, in the wildfire threat zone east of the burning slope */
+const HOMEH=[[-188,-125,14,5],[-206,-139,9,3.6]];
+const domeM=new THREE.MeshStandardMaterial({color:0x2A3A2C,flatShading:true,roughness:1});
+HOMEH.forEach(([x,z,r,h])=>{const m=new THREE.Mesh(new THREE.SphereGeometry(1,14,8,0,Math.PI*2,0,Math.PI/2),domeM);m.scale.set(r,h,r);m.position.set(x,0,z);scene.add(m);});
+const domeY=(x,z)=>{let y=0;HOMEH.forEach(([cx,cz,r,h])=>{const d=Math.hypot(x-cx,z-cz)/r;if(d<1)y=Math.max(y,h*Math.sqrt(1-d*d));});return y;};
+[[-188,-125,1.3],[-183,-120,1.6],[-192,-130,1.0],[-183,-130,2.0],[-193,-119,0.6],[-206,-139,1.4],[-203,-143,1.9],[-209,-135,0.9]].forEach(([x,z,r])=>{const g=house(x,z,r);g.position.y=domeY(x,z)-0.25;});
+[[-180,-124],[-189,-116],[-196,-127],[-188,-134],[-202,-136],[-210,-142]].forEach(([x,z])=>{const t=makeTree(x,z,0.8,false);t.position.y=domeY(x,z)-0.1;});
+const forest=[];for(let k=0;k<90;k++){const x=-185+rnd()*130,z=-185+rnd()*130;if(x>-60&&z>-120)continue;if(roadD(x,z)<4.2||domeY(x,z)>0)continue;forest.push([x,z]);}
+const BURN=new V3(-177,0,-101);const firesZ=[],fireSpots=[];
+for(let k=0;k<22;k++){const a=rnd()*6.283,r=1.5+rnd()*8,x=BURN.x+Math.cos(a)*r,z=BURN.z+Math.sin(a)*r*0.8;if(domeY(x,z)>0||roadD(x,z)<4.5||Math.abs(x+163)<3)continue;forest.push([x,z]);}
+forest.forEach(([x,z])=>{const d=Math.hypot(x-BURN.x,z-BURN.z),b=d<10;makeTree(x,z,0.9+rnd()*0.6,b);if(b){fireSpots.push(new V3(x,0,z));const f=sprite(0xFF7A2E);f.userData={x,z,ph:rnd()*6};firesZ.push(f);}});
+/* scorched ground and the glow of the fire front */
+{const sc=new THREE.Mesh(new THREE.CircleGeometry(11,32),new THREE.MeshStandardMaterial({color:0x2A1D16,roughness:1}));sc.rotation.x=-Math.PI/2;sc.scale.set(1,0.8,1);sc.position.set(BURN.x,0.07,BURN.z);scene.add(sc);}
+const fireGlow=sprite(0xFF6A1E);fireGlow.position.set(BURN.x,2,BURN.z);fireGlow.scale.set(30,12,1);
+const smoke=pointsCloud(140,0x8E96A3,4.5);smoke.m.blending=THREE.NormalBlending;smoke.m.opacity=0.32;smoke.seed=[];for(let i=0;i<140;i++)smoke.seed.push({s:fireSpots[i%Math.max(1,fireSpots.length)]||BURN,ph:rnd(),dx:rnd()*2-1});
+const rocks=[];for(let k=0;k<3;k++){const r=new THREE.Mesh(new THREE.DodecahedronGeometry(0.7+0.2*k,0),new THREE.MeshStandardMaterial({color:0x7A7F8A,flatShading:true}));r.scale.set(1,0.72,0.88);r.visible=false;scene.add(r);rocks.push(r);}
+const eles=[makeElephant(0.7),makeElephant(0.45)];eles.forEach(e=>scene.add(e.g));const moose=makeMoose();moose.g.scale.setScalar(0.8);scene.add(moose.g);
+/* data-center campus, west of the office */
+const hallM=new THREE.MeshStandardMaterial({color:0x8E97A6,roughness:.7});
+[[-166,-14],[-166,4]].forEach(([x,z])=>{const g=new THREE.Group();g.position.set(x,0,z);scene.add(g);box(g,14,3.6,10,hallM,0,1.8,0);
+  for(let k=0;k<5;k++){box(g,1.2,0.6,1.2,M.steel,-5+k*2.5,3.9,2);cyl(g,0.45,0.45,0.06,M.dark,-5+k*2.5,4.22,2);}});
+const fenceM=new THREE.MeshBasicMaterial({color:0xA0A8B8,transparent:true,opacity:0.14,side:THREE.DoubleSide,depthWrite:false}),wireM=new THREE.LineBasicMaterial({color:0x9AA3B2});
+const FEN=[[-178,-26],[-148,-26],[-148,16],[-178,16],[-178,-26]];
+for(let e=0;e<4;e++){const [x0,z0]=FEN[e],[x1,z1]=FEN[e+1],len=Math.hypot(x1-x0,z1-z0),n=Math.round(len/1.6);
+  for(let k=0;k<=n;k++)cyl(scene,0.05,0.05,1.8,M.steel,x0+(x1-x0)*k/n,0.9,z0+(z1-z0)*k/n);
+  const pl=new THREE.Mesh(new THREE.PlaneGeometry(len,1.7),fenceM);pl.position.set((x0+x1)/2,0.85,(z0+z1)/2);pl.rotation.y=-Math.atan2(z1-z0,x1-x0);scene.add(pl);
+  [0.5,1.1,1.75].forEach(y=>scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new V3(x0,y,z0),new V3(x1,y,z1)]),wireM)));}
+const jumper=makePerson(0x2A2D33,0x1E2128);jumper.g.scale.setScalar(0.9);scene.add(jumper.g);
+/* downtown utility work: a directional drill beside a street */
+/* construction lot between Main Street and the next block */
+flat(14,13,50,11.5,0x3A2E24,0.05);
+for(const [x0,z0,x1,z1] of [[43,5,57,5],[57,5,57,18],[57,18,43,18],[43,18,43,5]]){const n=Math.round(Math.hypot(x1-x0,z1-z0)/1.5);for(let q=0;q<=n;q++)cyl(scene,0.04,0.04,1.2,M.steel,x0+(x1-x0)*q/n,0.6,z0+(z1-z0)*q/n);
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new V3(x0,1.1,z0),new V3(x1,1.1,z1)]),new THREE.LineBasicMaterial({color:0xE8C547})));}
+box(scene,3,1.4,1.6,mat(0xD9DEE8),45.5,0.7,15.5);
+const DRILL_TO=new V3(50,0.2,-1.5);
+const hdd=makeHDD();hdd.g.position.set(50,0,13);hdd.g.lookAt(50,0,1.5);scene.add(hdd.g);const drillHead=sprite(0x94D27F);
+[-6,8,26,48].forEach(x=>cyl(scene,0.6,0.6,0.06,new THREE.MeshStandardMaterial({color:0x3A4256}),x,0.07,-1.5));
+[[0xE04B4B,-2.6],[0xE8D04A,-3.1],[0x4A8FE0,-3.6]].forEach(([c,z])=>box(scene,104,0.02,0.16,basic(c),9.5,0.07,z));
+/* suburban water main leak */
+const fountain=pointsCloud(70,0x9FD3F5,0.45);fountain.m.blending=THREE.NormalBlending;
+const LEAK=new V3(57.6,0,47);
+/* gas leak on the pipeline: a plume rises from the ground above the pipe */
+const GAS=new V3(90,0,88);const gasP=pointsCloud(80,0xC9D1CC,2.4);gasP.m.blending=THREE.NormalBlending;gasP.m.opacity=0.22;
+flat(5,4,GAS.x,GAS.z,0x3E3A2E,0.06);
+/* pipeline excavation */
+const excav=makeExcavator();excav.g.position.set(78,0,92.5);excav.g.lookAt(78,0,88);scene.add(excav.g);
+const dig=t=>{const s=Math.max(0,Math.sin(t*1.6));return s*s*s;};
+
+/* ---------- The fiber loop: one cable that passes every infrastructure ---------- */
+const LOOP=curve([[-43,-23],[-38.5,-13],[-36,-3.5],[-25,-1.5],[-12,-1.5],[10,-1.5],[30,-1.5],[50,-1.5],[57.5,4],[57.5,20],[57.5,45],[57.5,70],[60,84.5],[72,84.5],[88,84.5],[98,79],
+  [98.5,50],[98.5,20],[98.5,-10],[98.5,-40],[98.5,-70],[95,-92],[80,-98],[50,-98],[20,-98],[0,-98],[-14,-110],[-17,-128],[-8,-140],[-1,3,-146],[-3,8.3,-150],[-25,8.3,-150],[-47,8.3,-150],[-52,3,-153],
+  [-58,-158],[-80,-166],[-105,-168],[-128,-160],[-146,-144],[-158,-120],[-163,-95],[-163,-65],[-158,-40],[-146,-30],[-145,-13],[-136,-8.5],[-110,-8.5],[-90,-9.5],[-77.5,-10.5]]);
+const LLEN=LOOP.getLength();
+scene.add(new THREE.Mesh(new THREE.TubeGeometry(LOOP,1400,0.2,8,false),basic(ORANGE)));
+scene.add(new THREE.Mesh(new THREE.TubeGeometry(LOOP,1400,1.4,8,false),new THREE.MeshBasicMaterial({color:ORANGE,transparent:true,opacity:0.14,depthWrite:false})));
+const LS=2400,LPTS=[];for(let i=0;i<=LS;i++)LPTS.push(LOOP.getPointAt(i/LS));
+const loopAt=u=>LPTS[Math.round(clamp(u,0,1)*LS)];
+/* nearest position on the loop; results are cached, because the incident list asks for the same fixed points on every waterfall column */
+const NU_CACHE=new Map();
+function nearestU(x,z){const key=x+','+z;const c=NU_CACHE.get(key);if(c!==undefined)return c;let b=0,bd=1e18;for(let i=0;i<=LS;i++){const p=LPTS[i],d=(p.x-x)*(p.x-x)+(p.z-z)*(p.z-z);if(d<bd){bd=d;b=i;}}const u=b/LS;if(NU_CACHE.size<5000)NU_CACHE.set(key,u);return u;}
+const kmAt=u=>u*LLEN*KM_PER_UNIT;
+addLabel(new V3(0,1.2,-104),'<b>One fiber loop</b><span>About '+Math.round(LLEN*KM_PER_UNIT)+' km, owned by the telecom operator</span>','',{});
+/* infrastructure labels */
+[['Main Street bridge',-25,6,4],['Downtown utility corridor',22,6,-8],['Suburban water main',66,4,40],['Energy pipeline and power line',40,4,104],['Highway',112,4,-20],['Rail corridor',50,4,-110],['Hill road',30,3,-84],['River and dam',-25,12,-160],['Environmental hazards',-130,6,-135],['Data center',-163,6,-34]]
+  .forEach(([n,x,y,z])=>addLabel(new V3(x,y,z),n,'corr'));
+
+/* ---------- Incidents and their detection on the fiber ---------- */
+const fenceS=t=>fract(t/14);
+function jumperAt(fs){if(fs<0.35)return{x:-138-8.6*(fs/0.35),y:0,mode:'walk'};if(fs<0.5){const k=(fs-0.35)/0.15;return{x:-146.6-1.4*k,y:1.7*k,mode:'climb'};}
+  if(fs<0.58){const k=(fs-0.5)/0.08;return{x:-148-0.8*k,y:1.7*(1-k*k),mode:'drop'};}if(fs<0.9){const k=(fs-0.58)/0.32;return{x:-148.8-7*k,y:0,mode:'run'};}return null;}
+const mainX=t=>-43+fract(t/16)*105;
+const hwyZ=[t=>80-fract(t/13)*170,t=>-90+fract(t/16+0.4)*170,t=>80-fract(t/19+0.5)*170,t=>-90+fract(t/15+0.1)*170];
+const trainX=t=>110-fract(t/24)*150;
+const TRAIN_LEN=5*3.2;const trainAt=(x,t)=>{const tx=trainX(t);return x>tx-1.5&&x<tx+TRAIN_LEN;};
+const XGATE=t=>{const tx=trainX(t);return tx<24&&tx+TRAIN_LEN>-22;};
+const RU=[];for(let i=0;i<=RS;i+=2){const p=RPTS[i],u=nearestU(p.x,p.z),q=loopAt(u);RU.push({u,near:Math.hypot(q.x-p.x,q.z-p.z)<12});}
+const roadS=[t=>fract(t/46),t=>1-fract(t/38+0.35)];
+const drillA=t=>fract(t/20),rockP=t=>fract(t/9),eleOff=t=>-12+24*fract(t/26),mooseOff=t=>-10+22*fract(t/18);
+const uMain0=nearestU(-38,-1.5),uMain1=nearestU(50,-1.5),uH0=nearestU(98.5,79),uH1=nearestU(98.5,-70),uR0=nearestU(95,-92),uR1=nearestU(0,-98);
+const uMainX=x=>uMain0+(x+38)/88*(uMain1-uMain0),uHwyZ=z=>uH0+(79-z)/149*(uH1-uH0),uRailX=x=>uR0+(95-x)/95*(uR1-uR0);
+const EVENTS=[
+  {sec:'B',name:'Vehicle on the bridge',u:t=>uMainX(mainX(t)),w:0.0015,a:t=>mainX(t)>-34&&mainX(t)<-16?1:0},
+  {sec:'B',name:'Bridge deck vibration',u:()=>nearestU(-25,-1.5),w:0.004,a:t=>mainX(t)>-34&&mainX(t)<-10?0.55*(0.6+0.4*Math.sin(t*22)):0},
+  {sec:'U',name:'Traffic on Main Street',u:t=>uMainX(mainX(t)),w:0.0015,a:t=>mainX(t)>=-16&&mainX(t)<52?0.7:0},
+  {sec:'U',name:'Directional drilling',u:()=>nearestU(50,-1.5),w:0.0025,a:t=>0.15+0.85*drillA(t)},
+  {sec:'W',name:'Water-main leak',u:()=>nearestU(LEAK.x,LEAK.z),w:0.003,a:t=>0.45+0.25*Math.sin(t*2.3)},
+  {sec:'P',name:'Excavation near the pipeline',u:()=>nearestU(78,84.5),w:0.002,a:t=>dig(t)},
+  {sec:'P',name:'Gas leak',u:()=>nearestU(GAS.x,84.5),w:0.0025,a:t=>0.5+0.15*Math.sin(t*1.7)+0.15*Math.random()},
+  ...hwyZ.map((f,i)=>({sec:'H',name:'Highway traffic',u:t=>uHwyZ(f(t)),w:0.0015,a:t=>(f(t)<79&&f(t)>-70)?(i%2?0.6:0.85):0})),
+  {sec:'R',name:'Freight train',range:t=>[uRailX(clamp(trainX(t),0,95)),uRailX(clamp(trainX(t)+16,0,95))],u:t=>uRailX(clamp(trainX(t)+8,0,95)),w:0.002,a:t=>trainX(t)<95&&trainX(t)+16>0?0.55:0},
+  {sec:'R',name:'Broken rail',u:()=>uRailX(BRK),w:0.0012,a:t=>trainAt(BRK,t)?0.55+0.45*Math.pow(Math.max(0,Math.sin(t*38)),6):0},
+  ...roadS.map(f=>({sec:'Z',name:'Traffic on the hill road',u:t=>RU[Math.round(f(t)*(RU.length-1))].u,w:0.0015,a:t=>RU[Math.round(f(t)*(RU.length-1))].near?0.6:0})),
+  {sec:'D',name:'Spillway flow',u:()=>nearestU(-25,-150),w:0.006,a:t=>0.35+0.15*Math.random()},
+  {sec:'Z',name:'Rockfall',u:()=>nearestU(-105,-168),w:0.004,a:t=>{const p=rockP(t);return p>0.3&&p<0.45?1-(p-0.3)/0.15:0;}},
+  {sec:'Z',name:'Wildfire',u:()=>nearestU(BURN.x,BURN.z),w:0.006,a:t=>0.3+0.15*Math.sin(t*3)},
+  {sec:'Z',name:'Elephants crossing',u:()=>nearestU(-163,-78),w:0.002,a:t=>{const e=eleOff(t);return Math.exp(-(e/3.5)*(e/3.5))*(0.4+0.6*Math.pow(Math.max(0,Math.sin(t*0.8*Math.PI*2)),4));}},
+  {sec:'Z',name:'Moose crossing',u:()=>nearestU(-161,-52),w:0.002,a:t=>{const m=mooseOff(t);return Math.exp(-(m/2.5)*(m/2.5))*(0.4+0.6*Math.pow(Math.max(0,Math.sin(t*1.35*Math.PI*2)),4));}},
+  {sec:'C',name:'Fence climbing',u:()=>nearestU(-146,-10),w:0.002,a:t=>{const j=jumperAt(fenceS(t));if(!j)return 0;return j.mode==='climb'||j.mode==='drop'?1:0.4*Math.pow(Math.max(0,Math.sin(t*(j.mode==='run'?2.8:1.8)*Math.PI*2)),6);}}
+];
+const DET=0x5FD3F3;
+EVENTS.forEach(e=>{e.spark=sprite(DET);e.core=sprite(0xFFFFFF);e.ring=new THREE.Mesh(new THREE.RingGeometry(0.9,1.1,40),new THREE.MeshBasicMaterial({color:DET,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false}));e.ring.rotation.x=-Math.PI/2;scene.add(e.ring);});
+const evLabels=[['Excavator in the pipeline right-of-way',78,4.8,93],['Directional drill in a construction lot',50,4.8,13],['Water-main leak',LEAK.x+2,3,LEAK.z],['Gas leak',GAS.x,4.6,GAS.z],['Broken rail',BRK,2.6,-103.3],['Level crossing',-5,4,-104],['Homes in the wildfire threat zone',-192,12,-130],['Rockfall',-105,6,-172],['Wildfire near homes',BURN.x,9,BURN.z],['Animal crossing',-165,5,-66],['Fence climbing',-147,3.5,-10]]
+  .map(([n,x,y,z])=>addLabel(new V3(x,y,z),n,'ev',{near:200}));
+function signalU(u,t){let v=0;for(const e of EVENTS){const a=e.a(t);if(a<=0.01)continue;
+    if(e.range){const [p,q]=e.range(t),lo=Math.min(p,q),hi=Math.max(p,q);if(u>lo&&u<hi)v+=a*(0.5+0.5*Math.random());continue;}
+    const d=(u-e.u(t))/e.w;if(d*d<16)v+=a*Math.exp(-0.5*d*d)*(0.65+0.35*Math.random());}
+  return v;}
+
+/* ---------- Light in the fiber: pulse and backscatter for the sensing explanation ---------- */
+const pulseS=sprite(0xFF7A2E);pulseS.scale.setScalar(5);const pulseC=sprite(0xFFE0C0);pulseC.scale.setScalar(2);
+const NB=600,back=pointsCloud(NB,DET,0.9),bp=[];for(let i=0;i<NB;i++)bp.push({u0:0,t0:-99});let bpi=0;
+let pulseSpeed=1/7,pulseT0=0,dfosOn=0;
+function updateLight(t,dt){const u=fract((t-pulseT0)*pulseSpeed);const p=loopAt(u);pulseS.position.set(p.x,p.y+0.6,p.z);pulseC.position.copy(pulseS.position);
+  pulseS.material.opacity=0.7+0.3*Math.sin(t*20);
+  if(dfosOn>0.5){const n=Math.ceil(dt*90);for(let k=0;k<n;k++){bp[bpi]={u0:u-rnd()*pulseSpeed*dt,t0:t,j:rnd()};bpi=(bpi+1)%NB;}}
+  for(let i=0;i<NB;i++){const b=bp[i],ub=b.u0-pulseSpeed*(t-b.t0);if(ub<0||t-b.t0>1/pulseSpeed){back.arr.set([0,-80,0],i*3);continue;}const q=loopAt(ub);back.arr.set([q.x,q.y+0.9+0.3*(b.j-0.5),q.z],i*3);}
+  back.g.attributes.position.needsUpdate=true;back.m.opacity=dfosOn;back.pts.visible=dfosOn>0.01;}
+
+/* ---------- Town animation ---------- */
+function updateTown(t,dt){
+  const mx=mainX(t);mainCar.position.set(mx,0.05+mainBridgeY(mx),2.6);mainCar.lookAt(mx+1,0.05+mainBridgeY(mx+1),2.6);
+  hwyCars.forEach((m,i)=>{const z=hwyZ[i](t),x=i%2?100.5:105.5;m.position.set(x,0.05,z);m.lookAt(x,0.05,z+(i%2?1:-1));});
+  const tx=trainX(t);train.forEach((m,k)=>{const x=tx+k*3.2;m.visible=x>-200&&x<165;m.position.set(x,0.06,-104);m.lookAt(x-1,0.06,-104);});
+  excav.animate(dig(t),t);hdd.animate(t);const a=drillA(t);drillHead.position.copy(hdd.g.position).lerp(DRILL_TO,a).setY(0.25);drillHead.scale.setScalar(1.3+0.6*Math.sin(t*10));
+  swayConductors(t);
+  roadCars.forEach((m,i)=>{const s=roadS[i](t),p=ROAD.getPointAt(s),tg=ROAD.getTangentAt(s),dir=i?-1:1,n=new V3(-tg.z,0,tg.x).normalize().multiplyScalar(1.2*dir);m.position.set(p.x+n.x,0.05+hillBridgeY(s),p.z+n.z);m.lookAt(m.position.x+tg.x*dir,0.05+hillBridgeY(s+dir*1/ROADL),m.position.z+tg.z*dir);});
+  const gd=XGATE(t);XING.forEach(x=>{x.arm.rotation.x+=((gd?0:-1.35*x.sgn)-x.arm.rotation.x)*Math.min(1,dt*3);x.lamps.forEach((l,k)=>{l.material.opacity=gd&&((t*2.4|0)%2===k)?1:0.05;});});
+  brkRing.material.opacity=0.45+0.4*Math.sin(t*4);
+  for(let i=0;i<80;i++){const q=fract(t*0.35+i/80),a=i*2.39;gasP.arr.set([GAS.x+Math.cos(a)*(0.3+q*2.2)+q*2,0.2+q*7,GAS.z+Math.sin(a)*(0.3+q*1.6)],i*3);}gasP.g.attributes.position.needsUpdate=true;
+  for(let i=0;i<70;i++){const q=fract(t*0.9+i/70),ang=i*2.4,r=0.6*q;fountain.arr.set([LEAK.x+Math.cos(ang)*r,0.1+q*3.2-q*q*2.6,LEAK.z+Math.sin(ang)*r],i*3);}fountain.g.attributes.position.needsUpdate=true;
+  for(let i=0;i<150;i++){const q=fract(t*0.45+i/150);let x=-25+(((i*37)%45)/45-0.5)*7,y,z;if(q<0.7){const k=q/0.7;y=8.3-8.1*k;z=-149.8+5.8*k;}else{const k=(q-0.7)/0.3;y=0.15+0.2*Math.abs(Math.sin(t*9+i));z=-144+4*k;}spill.arr.set([x,y,z],i*3);}spill.g.attributes.position.needsUpdate=true;
+  const rp=rockP(t),rEnd=new V3(-105,0,-163.5);rocks.forEach((r,k)=>{const s=(rp-k*0.04)/0.3;r.visible=rp<0.75&&s>0;if(!r.visible)return;const e=Math.min(1,s);
+    const st=new V3(-105+k,15,-185);r.position.copy(st).lerp(new V3(rEnd.x+k*1.2-1,0.6,rEnd.z-1.5),Math.pow(e,1.4));r.position.y+=Math.abs(Math.sin(e*Math.PI*4))*1.5*(1-e);r.rotation.set(e*9,0,e*6);});
+  firesZ.forEach(f=>{const u=f.userData;f.position.set(u.x,2.2+0.4*Math.sin(t*7+u.ph),u.z);f.scale.set(3+0.9*Math.sin(t*9+u.ph),4.6+1.4*Math.sin(t*6.3+u.ph*2),1);});fireGlow.material.opacity=0.55+0.2*Math.sin(t*5);
+  smoke.seed.forEach((sd,i)=>{const p=fract(t*0.12+sd.ph);smoke.arr.set([sd.s.x+sd.dx*1.2+p*6,3+p*24,sd.s.z-p*3],i*3);});smoke.g.attributes.position.needsUpdate=true;
+  const eo=eleOff(t);eles.forEach((e,k)=>{const off=eo-k*3;e.g.position.set(-163+off,0,-78+k*1.5);e.g.lookAt(-162+off,0,-78+k*1.5);e.walk(t*2.6+k);});
+  const mo=mooseOff(t);moose.g.position.set(-161+mo,0,-52);moose.g.lookAt(-160+mo,0,-52);moose.walk(t*4.2);
+  const j=jumperAt(fenceS(t));jumper.g.visible=!!j;if(j){jumper.g.position.set(j.x,j.y,-10);jumper.g.lookAt(j.x-1,j.y,-10);
+    if(j.mode==='climb'){jumper.walk(t*6,0.6);jumper.arms.forEach((ar,i)=>ar.rotation.x=-2.6+0.3*Math.sin(t*6+i*3));}else if(j.mode==='drop'){jumper.walk(0,0);jumper.arms.forEach(ar=>ar.rotation.x=-1.2);}else jumper.walk(t*(j.mode==='run'?9:5.5),j.mode==='run'?0.8:0.5);}
+  /* detection sparks on the fiber at every incident */
+  EVENTS.forEach(e=>{const a=e.a(t),on=a>0.03;e.spark.visible=e.core.visible=on;e.ring.material.opacity=0;if(!on)return;const p=loopAt(e.u(t));
+    e.spark.position.set(p.x,p.y+0.7,p.z);e.core.position.copy(e.spark.position);e.spark.scale.setScalar(2.5+6*a);e.spark.material.opacity=0.35+0.65*a;e.core.scale.setScalar(0.8+1.6*a);e.core.material.opacity=0.5+0.5*a;
+    const ph=fract(t*1.2+e.w*900);e.ring.position.set(p.x,p.y+0.15,p.z);e.ring.scale.setScalar(1+5*ph);e.ring.material.opacity=a>0.3?(1-ph)*0.8*a:0;});
+  updateLight(t,dt);
+  /* the office glass fades as the camera approaches the tenant's office */
+}
+
+/* ---------- The owner's building and its server room ---------- */
+const BX=-60,BZ=-17,BW=34,BD=22,BH=9;
+const wallM=new THREE.MeshStandardMaterial({color:0x56607A,roughness:.85});
+const fadeWallM=new THREE.MeshStandardMaterial({color:0x56607A,roughness:.85,transparent:true,depthWrite:false});
+const roofM=new THREE.MeshStandardMaterial({color:0x3A4255,roughness:.8,transparent:true,depthWrite:false});
+box(scene,BW,0.12,BD,new THREE.MeshStandardMaterial({color:0x2A3242,roughness:.9}),BX,0.06,BZ);
+for(let i=0;i<=17;i++)box(scene,0.03,0.02,BD-0.4,basic(0x3A4458),BX-BW/2+i*2,0.13,BZ);
+for(let i=0;i<=11;i++)box(scene,BW-0.4,0.02,0.03,basic(0x3A4458),BX,0.13,BZ-BD/2+i*2);
+box(scene,BW,BH,0.4,wallM,BX,BH/2,BZ-BD/2);
+box(scene,0.4,BH,BD,wallM,BX-BW/2,BH/2,BZ);
+box(scene,0.4,BH,BD,wallM,BX+BW/2,BH/2,BZ);
+const southWall=box(scene,BW,BH,0.4,fadeWallM,BX,BH/2,BZ+BD/2);
+const roof=box(scene,BW+0.8,0.4,BD+0.8,roofM,BX,BH+0.2,BZ);
+const winM=new THREE.MeshStandardMaterial({color:0x16202F,metalness:.8,roughness:.12,transparent:true,depthWrite:false});
+const wins=[];for(let c=0;c<8;c++)wins.push(box(scene,2.2,1.2,0.05,winM,BX-14+c*4,6,BZ+BD/2+0.23));
+const bldLabel=addLabel(new V3(BX,BH+2.5,BZ),'','hi',{far:0});
+/* fiber patch panel on the east wall; the cable enters through the wall */
+const ODF=new V3(BX+BW/2-0.7,3.2,BZ-6);
+box(scene,0.8,4.2,2.4,new THREE.MeshStandardMaterial({color:0x1A2537}),ODF.x,2.3,ODF.z);
+for(let k=0;k<10;k++)box(scene,0.05,0.1,1.8,basic(k%2?CYAN:ORANGE),ODF.x-0.42,1.0+k*0.35,ODF.z);
+scene.add(polyTube([new V3(BX+BW/2+1,0.08,BZ-6),new V3(BX+BW/2,0.6,BZ-6),new V3(ODF.x,0.6,ODF.z)],0.16,basic(ORANGE)).mesh);
+const odfLabel=addLabel(new V3(ODF.x,5.2,ODF.z),'<b>Fiber patch panel</b><span>The cable is split into strands here</span>','',{near:75});
+
+/* ---------- Providers: racks inside, services outside ---------- */
+const PROV=[
+  ['Rail safety',0xA99BEA,1],['Pipeline protection',0xF08A9B,0],['Damage prevention',0x94D27F,1],['Traffic analytics',0x5CC8C2,2],
+  ['University laboratory',0xE9C46A,0],['Seismic research',0x6BB1F5,2],['Smart-city start-up',0xE77FE0,1],['Utility asset monitoring',0xF2A36F,2],
+  ['Power-line monitoring',0xFFD166,1],['Water-network monitoring',0x4FC3F7,2],['Perimeter security',0xC5E1A5,1],['Geohazard monitoring',0xB0BEC5,0]].map(a=>({name:a[0],color:a[1],tier:a[2]}));
+const NMAX=PROV.length;let N=5;
+function rackPos(j){const r=j<6?0:1,c=j%6;return new V3(BX-13+c*4.6,0,BZ+(r?5.5:-4.5));}
+const TRAY_Y=6.6;
+PROV.forEach((p,j)=>{
+  const rp=rackPos(j);const g=new THREE.Group();g.position.copy(rp);if(j>=6)g.rotation.y=Math.PI;scene.add(g);p.rack=g;p.mats=[];
+  const fm=(c,e)=>{const m=new THREE.MeshStandardMaterial({color:c,emissive:e||0,emissiveIntensity:e?0.8:0,roughness:.6,metalness:.3,transparent:true});p.mats.push(m);return m;};
+  const frame=fm(0x1C2433),srv=fm(0x3B4458),strip=fm(p.color,p.color),led=fm(0x000000,ORANGE),led2=fm(0x000000,0x94D27F);
+  box(g,1.8,4.4,2.2,frame,0,2.2,0);
+  box(g,1.6,0.8,0.06,fm(0x24314A),0,3.6,1.11);box(g,1.6,0.12,0.07,strip,0,4.05,1.12);box(g,0.4,0.06,0.08,led,-0.5,3.6,1.13);
+  for(let k=0;k<4;k++){box(g,1.6,0.42,0.06,srv,0,0.6+k*0.62,1.11);for(let q=0;q<4;q++)box(g,0.06,0.06,0.08,led2,0.2+q*0.14,0.6+k*0.62,1.13);}
+  box(g,1.84,0.1,2.24,strip,0,4.45,0);
+  /* own strand from the patch panel, via the cable tray */
+  const d=j*0.07,top=new V3(rp.x,4.5,rp.z);
+  p.strandMat=new THREE.MeshBasicMaterial({color:p.color,transparent:true});
+  const st=polyTube([new V3(ODF.x-0.45,4.3,ODF.z-0.8+d*1.5),new V3(ODF.x-0.45,TRAY_Y+d,ODF.z-0.8+d*1.5),new V3(ODF.x-0.45,TRAY_Y+d,BZ+0.5+d),new V3(rp.x,TRAY_Y+d,BZ+0.5+d),new V3(rp.x,TRAY_Y+d,rp.z),top],0.06,p.strandMat);
+  scene.add(st.mesh);p.strand=st.mesh;p.strandCurve=st.curve;p.spark=sprite(p.color);p.spark.scale.setScalar(0.7);
+  p.rackLabel=addLabel(new V3(rp.x,5.5,rp.z),'<b>'+p.name+'</b><span>Own strand, interrogator and servers</span>','',{near:60});
+  /* freed footprint */
+  const fp=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(2.2,2.6)),new THREE.LineDashedMaterial({color:0x94D27F,dashSize:0.3,gapSize:0.2,transparent:true,opacity:0}));
+  fp.computeLineDistances();fp.rotation.x=-Math.PI/2;fp.position.set(rp.x,0.16,rp.z);scene.add(fp);p.foot=fp;
+  p.on=0;
+});
+box(scene,30,0.08,0.9,new THREE.MeshStandardMaterial({color:0x4E5766}),BX-2,TRAY_Y-0.1,BZ+0.5);
+const freedLabel=addLabel(new V3(BX-10,1.0,BZ-4.5),'<b>Floor space freed</b>','',{near:90});
+/* the CoFiber modular unit */
+const UNIT=new V3(BX-1.5,0,BZ-4.5);
+const unit=new THREE.Group();unit.position.copy(UNIT);scene.add(unit);const unitMats=[];
+const um=(c,e,ei)=>{const m=new THREE.MeshStandardMaterial({color:c,emissive:e||0,emissiveIntensity:ei||0,roughness:.5,metalness:.35,transparent:true});unitMats.push(m);return m;};
+/* a standard 42U rack (about 2 m) holding the CoFiber unit: a 4U chassis, about 18 cm tall */
+box(unit,1.8,0.1,2.2,um(0x1C2433),0,4.4,0);box(unit,1.8,4.4,0.08,um(0x1C2433),0,2.2,-1.06);[-0.86,0.86].forEach(x=>box(unit,0.08,4.4,2.2,um(0x1C2433),x,2.2,0));
+[-0.72,0.72].forEach(x=>box(unit,0.06,4.3,0.06,um(0x6B7180),x,2.2,1.02));
+for(let k=0;k<3;k++)box(unit,1.5,0.1,1.9,um(0x2B3240),0,3.6+k*0.18,0);
+const CH_Y=2.3,CH_H=0.42;
+box(unit,1.56,CH_H,2.0,um(0x141E2E),0,CH_Y,0);box(unit,1.6,CH_H+0.02,0.05,um(0x2A3346),0,CH_Y,1.03);
+box(unit,0.5,0.12,0.06,um(0,ORANGE,1.2),-0.45,CH_Y+0.08,1.06);
+['IN','IN','EC','EC'].forEach((n,k)=>{box(unit,0.14,0.08,0.06,um(0,k<2?ORANGE:CYAN,1),0.12+k*0.2,CH_Y-0.06,1.06);});
+const chLogo=new THREE.Mesh(new THREE.PlaneGeometry(0.62,0.2),new THREE.MeshBasicMaterial({map:LOGO_TEX,transparent:true}));chLogo.position.set(-0.45,CH_Y-0.1,1.065);unit.add(chLogo);unitMats.push(chLogo.material);
+const unitGlow=sprite(ORANGE);unitGlow.position.set(UNIT.x,CH_Y,UNIT.z+1.3);unitGlow.scale.setScalar(3);
+const unitStrand=new THREE.MeshBasicMaterial({color:ORANGE,transparent:true});
+scene.add(polyTube([new V3(ODF.x-0.45,4.3,ODF.z+0.9),new V3(ODF.x-0.45,TRAY_Y-0.3,ODF.z+0.9),new V3(ODF.x-0.45,TRAY_Y-0.3,BZ+0.2),new V3(UNIT.x,TRAY_Y-0.3,BZ+0.2),new V3(UNIT.x,TRAY_Y-0.3,UNIT.z),new V3(UNIT.x,4.5,UNIT.z)],0.1,unitStrand).mesh);
+const unitLabel=addLabel(new V3(UNIT.x,5.2,UNIT.z),'<b>CoFiber modular unit</b><span>4U chassis in a standard rack · one strand</span>','hi',{near:90});
+const unitAtk=0;
+
+/* ---------- FiberVM hub, stream tiers and services outside ---------- */
+const HX=BX-15,CZC=64;const HUB=new V3(HX,12.5,CZC);
+const vmGroup=new THREE.Group();scene.add(vmGroup);const vmMats=[];
+function vmMat(m){m.transparent=true;vmMats.push({m,op:m.opacity==null?1:m.opacity});return m;}
+function annulus(r0,r1){const s=new THREE.Shape();s.absarc(0,0,r1,0,Math.PI*2,false);const h=new THREE.Path();h.absarc(0,0,r0,0,Math.PI*2,true);s.holes.push(h);return s;}
+function sector(r0,r1,a0,a1){const s=new THREE.Shape();s.moveTo(r1*Math.cos(a0),r1*Math.sin(a0));s.absarc(0,0,r1,a0,a1,false);s.lineTo(r0*Math.cos(a1),r0*Math.sin(a1));s.absarc(0,0,r0,a1,a0,true);s.closePath();return s;}
+const GAP=Math.atan2(27.09,28.05);
+const iconGeo=new THREE.ExtrudeGeometry([sector(31,47,GAP,2*Math.PI-GAP),annulus(20,26),annulus(15.5,17.5),annulus(11.65,13.35),annulus(5,9)],{depth:18,bevelEnabled:false,curveSegments:72});iconGeo.translate(0,0,-9);
+/* CoFiber campus: an office block, a glass-walled data hall that runs the FiberVM hub, and the logo */
+const campus=new THREE.Group();campus.position.set(HX,0,CZC);scene.add(campus);
+flat(46,30,HX,CZC+2,0x1A2430,0.04);
+const concC=new THREE.MeshStandardMaterial({color:0xC9CED8,roughness:.8}),darkC=new THREE.MeshStandardMaterial({color:0x2A3242,roughness:.7});
+const glassC=new THREE.MeshStandardMaterial({color:0x5A7FA8,metalness:.6,roughness:.15,transparent:true,opacity:0.45});
+box(campus,16,9,12,glassC,-6,4.5,-1);for(let y=3;y<9;y+=3)box(campus,16.1,0.15,12.1,concC,-6,y,-1);box(campus,16.4,0.5,12.4,concC,-6,9.25,-1);
+for(let k=0;k<5;k++)for(let r=0;r<2;r++)box(campus,2.2,0.9,0.05,new THREE.MeshBasicMaterial({color:0xF2D9A0}),-12+k*3,1.6+r*3+(k%2)*0.2,5.06);
+box(campus,12,5,12,darkC,9,2.5,-1);box(campus,11.6,3.6,0.08,glassC,9,2.3,5.02);box(campus,12.3,0.4,12.3,concC,9,5.2,-1);
+for(let r=0;r<2;r++)for(let k=0;k<6;k++){const x=4.5+k*1.7,z=1.5-r*3.5;box(campus,1.1,3,1.4,new THREE.MeshStandardMaterial({color:0x1C2433}),x,1.5,z);box(campus,0.9,0.08,0.05,basic(r?CYAN:ORANGE),x,2.4,z+0.72);box(campus,0.9,0.08,0.05,basic(0x94D27F),x,1.6,z+0.72);}
+for(let k=0;k<4;k++){box(campus,1.6,0.7,1.6,M.steel,5+k*2.6,5.75,-4);cyl(campus,0.6,0.6,0.08,M.dark,5+k*2.6,6.12,-4);}
+box(campus,4,0.2,2.2,concC,-6,3.1,6.3);[-7.6,-4.4].forEach(x=>box(campus,0.15,3,0.15,concC,x,1.5,7.2));
+const signM=new THREE.MeshBasicMaterial({map:LOGO_TEX});const sign=new THREE.Mesh(new THREE.PlaneGeometry(5,1.6),signM);sign.position.set(-9.5,7.6,5.08);campus.add(sign);
+const hub=new THREE.Group();hub.position.set(HX-6,11.6,CZC-1);scene.add(hub);
+
+cyl(campus,0.06,0.06,4,M.steel,13.5,7.4,-5.5);cyl(campus,0.06,0.06,3,M.steel,12.5,6.9,-6);
+const hallGlow=sprite(CYAN);hallGlow.position.set(HX+9,2.6,CZC+5.6);hallGlow.scale.set(14,5,1);
+const hubLight=new THREE.PointLight(0xFFE2CC,0,50);hubLight.position.set(HX,14,CZC+10);scene.add(hubLight);
+const hubLabel=addLabel(new V3(HX,15,CZC-1),'','hi');
+/* stream tiers: three outputs on the data hall, one per resolution; every tenant stream leaves from the output of its tier */
+const TIER_C=[0xFFF1DE,0xF2A364,0xBD5D29],TIER_X=[3.8,9,14.2];const TPORT=TIER_X.map((x,i)=>new V3(HX+x,6.2+0.6*(3-i),CZC+4.2));const tierLbl=[];
+TIER_X.forEach((x,i)=>{const g=new THREE.Group();g.position.set(HX+x,5.4,CZC+3.6);vmGroup.add(g);
+  box(g,2.6,0.25,1.6,vmMat(new THREE.MeshStandardMaterial({color:0x2A3242})),0,0.12,0);
+  for(let k=0;k<3-i;k++)box(g,1.6,0.42,0.9,vmMat(new THREE.MeshBasicMaterial({color:TIER_C[i]})),0,0.5+k*0.6,0.2);
+  const s=sprite(TIER_C[i]);s.position.copy(TPORT[i]);s.scale.setScalar(3);g.userData.s=s;
+  tierLbl.push(addLabel(new V3(HX+x,7.6+0.6*(3-i),CZC+4.2),['Full resolution','Reduced','Summary'][i],'ev',{near:110}));});
+const tierHead=addLabel(new V3(HX+9,11.8,CZC+4.2),'<b>Stream tiers</b><span>Each tenant stream leaves from the tier it subscribes to</span>','',{near:110});
+
+/* waterfall textures at three resolutions, shown on the providers' screens */
+const LUT=(()=>{const st=[[0,[11,18,32]],[.22,[26,42,72]],[.45,[96,58,66]],[.65,[189,93,41]],[.85,[242,163,100]],[1,[255,244,228]]];
+  const o=new Uint8ClampedArray(768);for(let i=0;i<256;i++){const x=i/255;let k=0;while(k<st.length-2&&x>st[k+1][0])k++;
+  const f=(x-st[k][0])/(st[k+1][0]-st[k][0]);for(let j=0;j<3;j++)o[i*3+j]=st[k][1][j]+(st[k+1][1][j]-st[k][1][j])*f;}return o;})();
+const TIERS=[{name:'Full resolution',cols:120},{name:'Reduced',cols:40},{name:'Summary',cols:14}];
+TIERS.forEach(tr=>{tr.c=document.createElement('canvas');tr.c.width=tr.cols;tr.c.height=60;tr.g=tr.c.getContext('2d');tr.g.fillStyle='#0B1220';tr.g.fillRect(0,0,tr.cols,60);
+  tr.tex=new THREE.CanvasTexture(tr.c);tr.tex.magFilter=THREE.NearestFilter;tr.tex.minFilter=THREE.LinearFilter;tr.tex.generateMipmaps=false;});
+function signal(u,t){return Math.min(1,0.07+0.12*Math.random()+signalU(u,t));}
+let lastU=[];
+function wfRow(t){TIERS.forEach(tr=>{const g=tr.g,w=tr.cols,h=60;g.drawImage(tr.c,0,0,w,h-1,0,1,w,h-1);const img=g.createImageData(w,1),d=img.data;const n=Math.round(120/w);
+  for(let c=0;c<w;c++){let v=0;for(let k=0;k<n;k++)v=Math.max(v,signal((c+(k+.5)/n)/w,t));const li=(v*255|0)*3;d[c*4]=LUT[li];d[c*4+1]=LUT[li+1];d[c*4+2]=LUT[li+2];d[c*4+3]=255;}
+  g.putImageData(img,0,0);tr.tex.needsUpdate=true;});}
+/* provider service screens, outside the building */
+/* provider desks stand in a shallow arc to the left (west) of the CoFiber campus */
+function appPos(j,n){const x=HX-27-j*6.6,c=HX-27-(n-1)*3.3,dx=x-c;return new V3(x,7,74-0.03*dx*dx);}
+PROV.forEach((p,j)=>{const g=new THREE.Group();scene.add(g);p.app=g;
+  const fr=new THREE.Mesh(new THREE.BoxGeometry(4,2.5,0.18),new THREE.MeshStandardMaterial({color:p.color,emissive:p.color,emissiveIntensity:0.35,roughness:.5}));g.add(fr);
+  p.scrMat=new THREE.MeshBasicMaterial({map:TIERS[0].tex});const scr=new THREE.Mesh(new THREE.PlaneGeometry(3.7,2.2),p.scrMat);scr.position.z=0.1;g.add(scr);
+  const bk=new THREE.Mesh(new THREE.PlaneGeometry(3.7,2.2),basic(0x141E2E));bk.position.z=-0.1;bk.rotation.y=Math.PI;g.add(bk);
+  p.pole=new THREE.Mesh(new THREE.CylinderGeometry(0.08,0.08,1,8),M.steel);scene.add(p.pole);
+  p.appLabel=addLabel(new V3(),'','');p.cur=appPos(j,N);});
+
+/* new entrants: analytics companies that could not reach this data before */
+const ENT_TYPES=['Acoustic AI start-up','Vibration analytics firm','Machine-learning start-up','Signal-processing specialist','Structural-dynamics consultancy','Seismology research group',
+  'Sound-recognition company','Predictive-maintenance start-up','Edge-AI start-up','Geophysics analytics firm','Audio-analytics company','Data-science consultancy'];
+const NEWC=0x94D27F;
+function entPos(j,n){return appPos(j,n).add(new V3(3.6,-1.6,7.5));}
+PROV.forEach((p,j)=>{const e={type:ENT_TYPES[j],tier:(p.tier+1)%3,on:0};p.ent=e;const g=new THREE.Group();scene.add(g);e.g=g;
+  const fr=new THREE.Mesh(new THREE.BoxGeometry(3.4,2.15,0.16),new THREE.MeshStandardMaterial({color:p.color,emissive:p.color,emissiveIntensity:0.25,roughness:.5}));g.add(fr);
+  const edge=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(3.7,2.45,0.2)),new THREE.LineBasicMaterial({color:NEWC}));g.add(edge);
+  e.scrMat=new THREE.MeshBasicMaterial({map:TIERS[e.tier].tex});const scr=new THREE.Mesh(new THREE.PlaneGeometry(3.1,1.85),e.scrMat);scr.position.z=0.09;g.add(scr);
+  const bk=new THREE.Mesh(new THREE.PlaneGeometry(3.1,1.85),basic(0x141E2E));bk.position.z=-0.09;bk.rotation.y=Math.PI;g.add(bk);
+  e.badge=sprite(NEWC);e.badge.scale.setScalar(1.4);
+  e.pole=new THREE.Mesh(new THREE.CylinderGeometry(0.07,0.07,1,8),M.steel);scene.add(e.pole);
+  e.L=addLabel(new V3(),'<b>New entrant · '+e.type+'</b><span>'+p.name+' · from FiberVM, '+TIERS[e.tier].name.toLowerCase()+'</span>','new',{near:120});
+  e.cur=entPos(j,N);g.visible=false;});
+
+/* flows */
+class Flow{constructor(color,n,speed,size){this.n=n;this.speed=speed;const c=pointsCloud(n,color,size);this.arr=c.arr;this.pm=c.m;this.points=c.pts;this.g=c.g;
+    this.lm=new THREE.LineBasicMaterial({color,transparent:true,opacity:0});this.lg=new THREE.BufferGeometry();this.line=new THREE.Line(this.lg,this.lm);scene.add(this.line);this.curve=null;}
+  setCurve(c){this.curve=c;this.lg.setFromPoints(c.getPoints(48));}
+  update(t,level){if(!this.curve)return;const on=level>0.01;this.points.visible=this.line.visible=on;if(!on)return;
+    for(let k=0;k<this.n;k++){const u=(t*this.speed+k/this.n)%1,p=this.curve.getPoint(u);this.arr[k*3]=p.x;this.arr[k*3+1]=p.y;this.arr[k*3+2]=p.z;}
+    this.g.attributes.position.needsUpdate=true;this.pm.opacity=level;this.lm.opacity=0.3*level;}}
+const arc=(a,b,lift)=>new THREE.QuadraticBezierCurve3(a,a.clone().lerp(b,0.5).add(new V3(0,lift,0)),b);
+PROV.forEach(p=>{p.fToday=new Flow(p.color,10,0.32,0.6);p.fVM=new Flow(p.color,[22,11,5][p.tier],0.3,[0.75,0.55,0.4][p.tier]);p.ent.f=new Flow(NEWC,[22,11,5][p.ent.tier],0.3,[0.7,0.5,0.38][p.ent.tier]);});
+const upFlow=new Flow(ORANGE,24,0.25,0.8);upFlow.setCurve(arc(new V3(UNIT.x,BH+0.5,UNIT.z+4),new V3(HX+9,5.6,CZC-2),16));
+function placeApps(){PROV.forEach((p,j)=>{if(j>=N)return;const ap=appPos(j,N);p.target=ap;
+  const rp=rackPos(j);p.fToday.setCurve(arc(new V3(rp.x,BH+0.6,rp.z),ap.clone().add(new V3(0,1.4,0)),10));
+  p.fVM.setCurve(arc(TPORT[p.tier],ap.clone().add(new V3(0,1.4,0)),6));const ep=entPos(j,N);p.ent.target=ep;p.ent.f.setCurve(arc(TPORT[p.ent.tier],ep.clone().add(new V3(0,1.3,0)),9));});}
+placeApps();
+
+/* agreements: one paper per provider and phase today, one paper with CoFiber */
+const paperTex=(()=>{const c=document.createElement('canvas');c.width=64;c.height=84;const g=c.getContext('2d');g.fillStyle='#F4F1EA';g.fillRect(0,0,64,84);g.fillStyle='#9AA3B2';
+  for(let k=0;k<7;k++)g.fillRect(8,10+k*8,k===0?30:48,3);g.strokeStyle='#2B6CB0';g.lineWidth=2;g.beginPath();g.moveTo(10,74);g.bezierCurveTo(20,64,26,82,40,70);g.stroke();return new THREE.CanvasTexture(c);})();
+const pile=[];for(let k=0;k<36;k++){const m=new THREE.Mesh(new THREE.PlaneGeometry(1.1,1.45),new THREE.MeshBasicMaterial({map:paperTex,side:THREE.DoubleSide,transparent:true,opacity:0}));m.rotation.x=-Math.PI/2;m.rotation.z=(rnd()-0.5)*0.5;
+  m.position.set(BX+BW/2-3+(rnd()-0.5)*0.4,1.25+k*0.035,BZ+7+(rnd()-0.5)*0.4);scene.add(m);pile.push(m);}
+box(scene,2.6,1.2,1.6,mat(0x5B4A3A),BX+BW/2-3,0.6,BZ+7);
+const pileLabel=addLabel(new V3(BX+BW/2-3,3.2,BZ+7),'','',{near:75});
+
+/* ---------- Introduction: how fiber sensing works, on a separate test bench ---------- */
+const IZ=520,IX0=-58,IX1=62,IY=0.45,EVX=26,ILEN=IX1-IX0;
+const ICEN=new V3(2,4,IZ);
+{const ip=new THREE.Mesh(new THREE.PlaneGeometry(170,64),new THREE.MeshStandardMaterial({color:0x0F1828,roughness:1}));ip.rotation.x=-Math.PI/2;ip.position.set(2,0.02,IZ);scene.add(ip);
+  const ig=new THREE.GridHelper(170,34,0x1B2840,0x142036);ig.position.set(2,0.04,IZ);scene.add(ig);}
+/* equipment shelter, cut away at the front, with a standard rack; the CoFiber interrogator is a 4U chassis in it */
+const SHX=IX0-4.5;
+const shel=new THREE.Group();shel.position.set(SHX,0,IZ);scene.add(shel);
+/* scene scale: one unit is about 1.9 m, so the shelter is about 5 m wide and 3 m high, the rack 2 m high, and the 4U chassis 18 cm */
+const shM=new THREE.MeshStandardMaterial({color:0x8A919C,roughness:.9});
+box(shel,2.6,0.08,1.8,shM,0,0.04,0);box(shel,2.6,1.6,0.08,shM,0,0.8,-0.86);[-1.26,1.26].forEach(x=>box(shel,0.08,1.6,1.8,shM,x,0.8,0));box(shel,2.8,0.1,2.0,shM,0,1.65,0);
+const rack=new THREE.Group();rack.position.set(0.4,0.08,-0.45);rack.scale.setScalar(0.52);shel.add(rack);
+box(rack,0.6,2.0,0.05,mat(0x1C2433),0,1.0,-0.33);[-0.28,0.28].forEach(x=>box(rack,0.04,2.0,0.66,mat(0x1C2433),x,1.0,0));box(rack,0.6,0.04,0.66,mat(0x1C2433),0,2.0,0);
+for(let k=0;k<4;k++)box(rack,0.52,0.08,0.55,mat(0x2B3240),0,0.3+k*0.12,0);
+box(rack,0.52,0.18,0.6,mat(0x141E2E),0,1.2,0);box(rack,0.54,0.19,0.03,basic(ORANGE),0,1.2,0.31);
+const CHW=new V3(SHX+0.4,0.08+1.2*0.52,IZ-0.45+0.17);
+const pI=makePerson(0x3B4A5E,0x22262E);pI.g.position.set(SHX-1.9,0,IZ+1.3);pI.g.rotation.y=0.6;pI.g.scale.setScalar(0.5);scene.add(pI.g);
+const vanI=makeCar(0xE9ECF2);vanI.scale.setScalar(1.25);vanI.position.set(SHX-5.2,0.02,IZ+0.6);vanI.rotation.y=0.35;scene.add(vanI);
+scene.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([CHW,new V3(SHX+0.9,0.2,IZ+0.3),new V3(IX0-0.5,IY,IZ),new V3(IX0,IY,IZ)]),24,0.04,8,false),basic(ORANGE)));
+const coreM=new THREE.MeshBasicMaterial({color:0xC05A24});
+cyl(scene,0.12,0.12,ILEN,coreM,(IX0+IX1)/2,IY,IZ,0,0,Math.PI/2);
+cyl(scene,0.38,0.38,ILEN,new THREE.MeshStandardMaterial({color:0x9DB8D8,transparent:true,opacity:0.2,depthWrite:false,roughness:.1,metalness:.2}),(IX0+IX1)/2,IY,IZ,0,0,Math.PI/2);
+for(let k=0;k<=6;k++){const x=IX0+k*20;box(scene,0.12,0.9,0.12,basic(0xC9B9A6),x,0.45,IZ+1.6);addLabel(new V3(x,0.2,IZ+2.4),(k*2)+' km','km',{anchor:'below',near:200});}
+const exI=makeExcavator();exI.g.position.set(EVX,0,IZ+4.5);exI.g.lookAt(EVX,0,IZ);scene.add(exI.g);
+const ripI=[0,1,2].map(()=>{const r=new THREE.Mesh(new THREE.RingGeometry(0.8,1.0,48),new THREE.MeshBasicMaterial({color:0xF2A36F,transparent:true,opacity:0,side:THREE.DoubleSide,depthWrite:false}));r.rotation.x=-Math.PI/2;r.position.set(EVX,0.08,IZ+2.2);scene.add(r);return r;});
+const pulseI=sprite(0xFF7A2E);pulseI.scale.setScalar(4);const pulseIc=sprite(0xFFE0C0);pulseIc.scale.setScalar(1.6);
+const NBI=420,backI=pointsCloud(NBI,DET,0.7),hotI=pointsCloud(160,0xFFFFFF,1.0),bpI=[],hpI=[];for(let i=0;i<NBI;i++)bpI.push({x0:0,t0:-99,j:0});for(let i=0;i<160;i++)hpI.push({x0:0,t0:-99,j:0});let bpIi=0,hpIi=0;
+const sparkI=sprite(DET),sparkIc=sprite(0xFFFFFF);
+box(scene,ILEN+10,0.05,5,new THREE.MeshStandardMaterial({color:0x22293A}),(IX0+IX1)/2,0.05,IZ+9);
+const carI=makeCar(0xD9DEE8);carI.scale.setScalar(1.25);scene.add(carI);const carSpark=sprite(DET),carCore=sprite(0xFFFFFF);
+const carX=t=>IX0-4+fract(t/9)*(ILEN+8);const lblCar=addLabel(new V3(),'Vehicle on a road beside the fiber','ev',{near:220});
+/* waterfall that builds one row at a time above the bench */
+const wfIc=document.createElement('canvas');wfIc.width=120;wfIc.height=54;const wfIg=wfIc.getContext('2d');wfIg.fillStyle='#0B1220';wfIg.fillRect(0,0,120,54);
+const wfIt=new THREE.CanvasTexture(wfIc);wfIt.magFilter=THREE.NearestFilter;wfIt.minFilter=THREE.LinearFilter;wfIt.generateMipmaps=false;
+const wfIp=new THREE.Mesh(new THREE.PlaneGeometry(ILEN,14),new THREE.MeshBasicMaterial({map:wfIt}));wfIp.position.set((IX0+IX1)/2,13,IZ-10);scene.add(wfIp);
+box(scene,ILEN+0.8,14.8,0.3,new THREE.MeshBasicMaterial({color:0x2A3A58}),(IX0+IX1)/2,13,IZ-10.2);
+const I_ONE=4.2;
+addLabel(new V3(SHX+0.4,1.75,IZ-0.45),'<b>CoFiber interrogator in an equipment shelter</b><span>4U chassis, about 18 cm tall, in a standard 19-inch rack</span>','hi',{near:220});
+addLabel(new V3(SHX-1.9,1.2,IZ+1.3),'Person','ev',{near:220});
+const lblPulse=addLabel(new V3(),'Laser pulse','ev',{near:220}),lblBack=addLabel(new V3(),'Backscatter returning','ev',{near:220});
+addLabel(new V3(EVX,4.4,IZ+4.5),'Excavator digging at '+((EVX-IX0)/10).toFixed(1)+' km','ev',{near:220});
+const lblDet=addLabel(new V3(EVX,IY+2.6,IZ),'<b>Detection</b><span>Located from the arrival time</span>','',{near:220});
+addLabel(new V3((IX0+IX1)/2,21.2,IZ-10),'<b>Waterfall view</b><span>Each row is one moment in time, each column a position along the fiber</span>','',{near:220});
+addLabel(new V3(IX0+34,IY+4.2,IZ-1),'<b>z = c·t / (2n)</b><span>Arrival time t gives the position z</span>','',{near:220});
+let wfIacc=0;
+function updateIntro(t,dt){if(camera.position.distanceTo(ICEN)>420)return;
+  const s=fract(t/I_ONE),px=IX0+s*ILEN,v=ILEN/I_ONE;pulseI.position.set(px,IY,IZ+0.2);pulseIc.position.copy(pulseI.position);pulseI.material.opacity=0.7+0.3*Math.sin(t*20);
+  lblPulse.pos.set(px,IY+1.8,IZ);
+  const d=dig(t);
+  const n=Math.ceil(dt*70);for(let k=0;k<n;k++){const x0=px-rnd()*v*dt;if(Math.abs(x0-EVX)<1.8&&d>0.25){hpI[hpIi]={x0,t0:t,j:rnd()};hpIi=(hpIi+1)%160;}else{bpI[bpIi]={x0,t0:t,j:rnd()};bpIi=(bpIi+1)%NBI;}}
+  const put=(cloud,pool)=>{for(let i=0;i<pool.length;i++){const b=pool[i],x=b.x0-v*(t-b.t0);if(x<IX0||t-b.t0>I_ONE){cloud.arr.set([0,-80,0],i*3);continue;}cloud.arr.set([x,IY+0.35+0.4*(b.j-0.5),IZ+0.4],i*3);}cloud.g.attributes.position.needsUpdate=true;};
+  put(backI,bpI);put(hotI,hpI);
+  const bx=Math.max(IX0+4,px-ILEN*0.35);lblBack.pos.set(bx,IY-1.2,IZ);lblBack.anchor='below';
+  exI.animate(d,t);ripI.forEach((r,k)=>{const ph=fract(t*0.9+k/3);r.scale.setScalar(1+6*ph);r.material.opacity=(1-ph)*0.8*d;});
+  sparkI.position.set(EVX,IY+0.2,IZ+0.3);sparkIc.position.copy(sparkI.position);sparkI.scale.setScalar(2+7*d);sparkI.material.opacity=0.2+0.8*d;sparkIc.scale.setScalar(0.6+1.8*d);lblDet.show=d>0.2;
+  const cx=carX(t),con=cx>IX0&&cx<IX1;carI.position.set(cx,0.06,IZ+9.2);carI.lookAt(cx+1,0.06,IZ+9.2);lblCar.pos.set(cx,2.6,IZ+9.2);
+  carSpark.visible=carCore.visible=con;carSpark.position.set(cx,IY+0.2,IZ+0.3);carCore.position.copy(carSpark.position);carSpark.scale.setScalar(4);carSpark.material.opacity=0.7;carCore.scale.setScalar(1.2);
+  wfIacc+=dt;while(wfIacc>1/8){wfIacc-=1/8;wfIg.drawImage(wfIc,0,0,120,53,0,1,120,53);const img=wfIg.createImageData(120,1),dd=img.data;
+    for(let c=0;c<120;c++){const val=Math.min(1,0.07+0.12*Math.random()+d*Math.exp(-0.5*Math.pow((c-(EVX-IX0))/1.6,2))*(0.7+0.3*Math.random())+(con?0.7*Math.exp(-0.5*Math.pow((c-(cx-IX0))/1.3,2)):0));const li=(val*255|0)*3;dd[c*4]=LUT[li];dd[c*4+1]=LUT[li+1];dd[c*4+2]=LUT[li+2];dd[c*4+3]=255;}
+    wfIg.putImageData(img,0,0);wfIt.needsUpdate=true;}}
+
+/* ---------- Modes ---------- */
+let modeTarget=0,modeT=0;
+const modeToday=document.getElementById('modeToday'),modeVM=document.getElementById('modeVM'),modeBadge=document.getElementById('modeBadge');
+function setMode(m){modeTarget=m;modeToday.setAttribute('aria-pressed',String(m===0));modeVM.setAttribute('aria-pressed',String(m===1));modeBadge.textContent=m?'With FiberVM':'Today';renderTable();}
+modeToday.addEventListener('click',()=>setMode(0));modeVM.addEventListener('click',()=>setMode(1));
+
+/* ---------- Comparison panel ---------- */
+const cmp=document.getElementById('cmp'),provN=document.getElementById('provN'),provMinus=document.getElementById('provMinus'),provPlus=document.getElementById('provPlus');
+function renderTable(){const c0=modeTarget===0,a=c0?' class="cur"':'',b=!c0?' class="cur"':'',an=c0?' class="n cur"':' class="n"',bn=!c0?' class="n cur"':' class="n"';
+  cmp.innerHTML='<thead><tr><th></th><th'+a+'>Today</th><th'+b+'>With FiberVM</th></tr></thead><tbody>'+
+  '<tr><th class="row">Fiber strands occupied</th><td'+an+'>'+N+'</td><td'+bn+'>1</td></tr>'+
+  '<tr><th class="row">Racks in the owner\'s server room</th><td'+an+'>'+N+'</td><td'+bn+'>1 unit</td></tr>'+
+  '<tr><th class="row">Interrogators installed</th><td'+an+'>'+N+'</td><td'+bn+'>1 modular</td></tr>'+
+  '<tr><th class="row">Access arrangements with the owner</th><td'+an+'>'+N+' × 3</td><td'+bn+'>1</td></tr>'+
+  '<tr><th class="row">Organizations able to use the data</th><td'+an+'>'+N+'</td><td'+bn+'>'+N+' + '+N+' new</td></tr>'+
+  '<tr><th class="row">Hardware owned by each provider</th><td'+a+'>Interrogator, servers, software</td><td'+b+'>None</td></tr>'+
+  '<tr><th class="row">To add one more provider</th><td'+a+'>New strand, rack and agreements</td><td'+b+'>A subscription</td></tr></tbody>';
+  provN.textContent=N;provMinus.disabled=N<=2;provPlus.disabled=N>=NMAX;}
+function setN(n){N=clamp(n,2,NMAX);placeApps();renderTable();}
+provMinus.addEventListener('click',()=>setN(N-1));provPlus.addEventListener('click',()=>setN(N+1));
+
+/* ---------- Sections of the loop ---------- */
+const SEC=(id,name,desc,color,a,b,view)=>{let u0=nearestU(a[0],a[1]),u1=nearestU(b[0],b[1]);if(u0>u1){const q=u0;u0=u1;u1=q;}return {id,name,desc,color,u0,u1,view};};
+const SECTIONS=[
+  SEC('B','Main Street bridge','Vehicles crossing and deck vibration.','#E77FE0',[-38,-1.5],[-12,-1.5],{pos:[-8,22,36],target:[-25,0,0]}),
+  SEC('U','Downtown utility corridor','Traffic and directional drilling near buried utilities.','#94D27F',[-12,-1.5],[52,-1.5],{pos:[100,62,-8],target:[14,0,0]}),
+  SEC('W','Suburban water main','Leak noise from a water main.','#6BB1F5',[57.5,6],[57.5,78],{pos:[88,26,72],target:[60,0,46]}),
+  SEC('P','Energy pipeline and power line','Excavation near the pipeline and a gas leak.','#F08A9B',[60,84.5],[97,80],{pos:[100,22,126],target:[80,1,90]}),
+  SEC('H','Highway','Traffic in both directions.','#5CC8C2',[98.5,78],[98.5,-75],{pos:[142,46,26],target:[100,0,-6]}),
+  SEC('R','Rail corridor','Freight trains and a broken rail.','#A99BEA',[94,-93],[0,-98],{pos:[58,30,-60],target:[48,0,-100]}),
+  SEC('D','River and dam','Spillway flow at the dam.','#4FC3F7',[-14,-110],[-52,-153],{pos:[22,42,-98],target:[-25,4,-152]}),
+  SEC('Z','Environmental hazards','Rockfall onto the hill road, wildfire near homes and animal crossing.','#E6E9EF',[-58,-158],[-163,-60],{pos:[-90,150,-38],target:[-160,0,-126]}),
+  SEC('C','Data center','Route protection and fence climbing.','#7DE0F0',[-160,-45],[-118,-8.5],{pos:[-122,28,28],target:[-156,1,-8]})];
+/* fuller descriptions, shown while an application is visited */
+const SEC_LONG={"B": "Vehicles crossing the bridge and the vibration of the deck appear at the bridge position. A bridge operator can use them for traffic counts and for long-term trends of the structure's response.", "U": "Traffic on Main Street draws diagonal lines, and a directional drill near buried utilities appears as a steady mark. A utility owner can be warned before a drill or an excavator reaches a duct, a gas line or a cable.", "W": "A leaking water main produces a steady hiss at a fixed position. A water utility can locate the leak before it reaches the surface.", "P": "An excavator digging in the pipeline right-of-way and a gas leak. A pipeline operator can be alerted to third-party digging and to leaks.", "H": "Vehicles in both directions draw diagonal lines whose slope gives their speed. A traffic agency can obtain flow, speed and incidents without roadside sensors.", "R": "Freight trains, and a broken rail that responds as each wheel passes over it. A railway can track its trains and find rail defects between inspections.", "D": "Water flowing over the spillway produces broadband noise at the dam. A dam operator can follow the flow and the response of the structure.", "Z": "Rockfall onto the hill road, a wildfire next to homes, and animals crossing the road. Road and emergency agencies can receive early warning of these hazards.", "C": "A person climbing the perimeter fence of the data center. The operator can protect the fiber route and the site perimeter."};SECTIONS.forEach(S=>S.long=SEC_LONG[S.id]);
+const ALLSEC={id:'ALL',name:'Whole fiber loop',u0:0,u1:1};
+SECTIONS.concat([ALLSEC]).forEach(S=>S.lengthM=(S.u1-S.u0)*LLEN*KM_PER_UNIT*1000);
+
+/* ---------- Guided story ---------- */
+const ROOM={pos:[BX+4,26,BZ+30],target:[BX+1,1,BZ]};
+const LONG={pos:[-5,320,300],target:[-25,0,-40]};
+const INTROV={pos:[12,30,IZ+96],target:[-10,4,IZ]};
+const HWV={pos:[SHX-3.4,3.0,IZ+10],target:[SHX-1.2,1.1,IZ],close:true};
+const TENV={pos:[HX-12,36,140],target:[HX-24,6,66]};
+const PROVV={pos:[HX-30,24,112],target:[HX-38,5,62]};
+const ENTV={pos:[HX-30,22,122],target:[HX-38,4,76]};
+function nearScreen(){const p=PROV[0].cur;return {pos:[p.x+7,p.y+5,p.z+22],target:[p.x,p.y,p.z]};}
+function screenView(){const p=PROV[0].cur;return {pos:[p.x,p.y+0.12,p.z+3.5],target:[p.x,p.y,p.z],close:true};}
+const STEPS=[
+  {title:'How fiber sensing works',mode:0,sec:'ALL',noSide:true,view:INTROV,intro:true,body:[
+    'Distributed fiber optic sensing (DFOS) turns an ordinary optical fiber into a long chain of vibration sensors.',
+    'The interrogator is a compact rack-mounted unit: the CoFiber chassis is 4U, about 18 cm tall, and sits in a standard 19-inch rack in a small equipment shelter or a telecom room.',
+    'The interrogator at one end sends short laser pulses into the fiber, shown in orange. The glass scatters a small part of each pulse back toward the interrogator, shown in cyan.',
+    'The arrival time of the backscatter gives the position along the fiber. When the excavator digs, the backscatter from its position changes, shown in white, so the event is detected at its distance.',
+    'Each moment becomes one row of the waterfall view. The digging appears as a bright mark at a fixed position, and the passing vehicle draws a diagonal line, because its position changes with time.'],
+    extra:()=>'<button type="button" class="cta" data-hw>Show the interrogator up close</button>'},
+  {title:'An example of a fiber loop hosting many applications',mode:0,sec:'ALL',dfos:1,dur:3800,view:LONG,body:[
+    'The same principle works on fiber that a telecom operator already owns. This loop leaves the operator\'s central office and passes a bridge, downtown streets with buried utilities, a suburban water main, an energy pipeline and a power line, a highway, a railway, a dam, wooded hills with a road through them and a data center.',
+    'The cyan sparks mark the incidents detected along the loop, and the waterfall view shows the whole loop over time.']},
+  {title:'Applications along the loop',mode:0,apps:true,view:LONG,body:[
+    'Each part of the loop serves different applications: traffic and rail operations, pipeline and utility protection, bridge and dam monitoring, natural-hazard warning and site security.',
+    'Use Next to visit the applications in order, or select any application in the list to go to it directly.']},
+  {title:'Today: every provider brings its own equipment',mode:0,stages:[
+    {label:'inside the fiber owner\'s building',view:ROOM,body:[
+      'The loop starts and ends in the owner\'s building, typically a telecom operator\'s central office. Each cable contains many fibers, called strands.',
+      'At the patch panel, each solution provider leases its own strand and connects it to its own interrogator.']},
+    {label:'the solution providers',view:PROVV,body:[
+      'Five solution providers deliver services along this loop today: rail safety, pipeline protection, damage prevention, traffic analytics and a university laboratory. Each one runs its own monitoring desk.',
+      'Each desk receives its data from the provider\'s own equipment in the fiber owner\'s building, shown by the colored streams.']},
+    {label:'back in the building: the cost of duplication',view:ROOM,body:[
+      'Each provider installs its own interrogator, servers and software in the owner\'s server room, and needs its own agreement for a test, for a trial and again for adoption.',
+      'Every additional provider adds a strand, a rack and a set of agreements, so equipment and floor space grow with the number of providers, and new entrants face a high barrier before they receive any data.',
+      'The table compares today\'s arrangement with FiberVM. Change the number of providers to see how the counts grow.'],cmp:true}]},
+  {title:'One CoFiber unit replaces the stacks',mode:1,ents:false,view:ROOM,body:[
+    'With FiberVM, the owner grants access once, to CoFiber. One modular CoFiber unit, a 4U chassis in a standard rack, replaces the providers\' equipment, and the floor space is freed.',
+    'The unit holds the interrogator modules the network requires, and FiberVM works with interrogators from different manufacturers.',
+    'The unit connects outward only, so nothing outside can reach into the owner\'s facility.']},
+  {title:'The same services, delivered as data',mode:1,ents:false,view:TENV,body:[
+    'The unit sends one acquisition, a single stream, from the owner\'s building to the CoFiber campus. There the FiberVM hub turns it into data products at three resolutions: full, reduced and summary.',
+    'Each provider becomes a tenant of FiberVM, receives the tier its application needs and continues to deliver the same service, without equipment in the owner\'s building.']},
+  {title:'New players can enter the market',mode:1,view:ENTV,body:[
+    'Once the infrastructure is shared, companies with expertise in analyzing and interpreting acoustic and vibration signals can offer competing and complementary applications.',
+    'These companies, such as machine-learning start-ups, signal-processing specialists and seismology groups, had no exposure to this market before, because access required an agreement with the fiber owner and an instrument in the owner\'s building.',
+    'Each new player subscribes to the data it needs, so every application gains new competitors. The new entrants are marked in green.']},
+  {title:'What a tenant sees',mode:1,tenant:true,view:TENV,body:[
+    'Each provider and each new entrant is a tenant of FiberVM, and each screen here stands for one tenant\'s monitoring desk.',
+    'The camera moves into the rail-safety tenant\'s screen, where the FiberVM tenant interface lists the streams the tenant holds and shows the waterfall view, the route map and a detailed analysis of any point on the cable.'],
+    extra:()=>'<button type="button" class="cta" data-open-tenant>Explore the tenant demo</button><p>Ready to explore what shared sensing infrastructure could make possible for your work?</p><a class="access-link story-access" href="/#contact">Request early access ↗</a>'}
+];
+let step=0,dfosT=0,tenTimers=[];
+const stEyebrow=document.getElementById('stEyebrow'),stTitle=document.getElementById('stTitle'),stBody=document.getElementById('stBody'),
+  stPrev=document.getElementById('stPrev'),stNext=document.getElementById('stNext'),stDots=document.getElementById('stDots');
+stDots.innerHTML=STEPS.map((s,i)=>'<button type="button" data-step="'+i+'" aria-label="Step '+(i+1)+': '+s.title+'"></button>').join('');
+stDots.addEventListener('click',e=>{const b=e.target.closest('[data-step]');if(b)setStep(+b.dataset.step);});
+let stPart=0;const seen=new Set();
+const cmpHold=document.getElementById('cmpHold'),cmpBox=document.getElementById('cmpBox');
+/* the applications step is a guided list: stPart 0 is the overview, stPart k shows section k */
+const partsOf=s=>s.apps?SECTIONS.length+1:(s.stages?s.stages.length:1);
+function goNext(){const s=STEPS[step];if(stPart<partsOf(s)-1)setStage(stPart+1);else setStep(step===STEPS.length-1?0:step+1);}
+function goPrev(){if(stPart>0)setStage(stPart-1);else if(step>0)setStep(step-1,false,true);}
+stPrev.addEventListener('click',goPrev);stNext.addEventListener('click',goNext);
+function clearTen(){tenTimers.forEach(clearTimeout);tenTimers=[];}
+function tenantSequence(instant){clearTen();if(instant||reduceMotion){flyTo(screenView(),true);TEN.open({auto:!reduceMotion});return;}
+  flyTo(nearScreen(),false,2600);tenTimers.push(setTimeout(()=>flyTo(screenView(),false,2400),2900));tenTimers.push(setTimeout(()=>{if(STEPS[step].tenant)TEN.open({auto:true});},5500));}
+function appsList(){return '<p class="prog">Applications viewed: <b>'+seen.size+' of '+SECTIONS.length+'</b></p><ul class="secs">'+SECTIONS.map((S,k)=>'<li><button type="button" class="srow" data-part="'+(k+1)+'" aria-pressed="'+(stPart===k+1)+'" data-seen="'+(seen.has(S.id)?1:0)+'"><span class="dot" style="background:'+S.color+'"></span><span class="sname">'+S.name+'</span><span class="smeta">'+(stPart===k+1?S.long:S.desc)+'</span></button></li>').join('')+'</ul>';}
+function renderStory(){const s=STEPS[step],n=partsOf(s);cmpHold.appendChild(cmpBox);
+  let eb='Step '+(step+1)+' of '+STEPS.length;
+  if(s.apps)eb+=stPart?' · application '+stPart+' of '+SECTIONS.length:' · overview';else if(s.stages)eb+=' · part '+(stPart+1)+' of '+n;
+  stEyebrow.textContent=eb;stTitle.textContent=s.title;
+  const path=step<3?'sensing':step<7?'cofiber':'tenant';
+  document.querySelectorAll('[data-path]').forEach(a=>{if(a.dataset.path===path)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current');});
+  const g=s.stages?s.stages[stPart]:null,body=g?g.body:(s.apps&&stPart>0?['Next continues to the following application. Any application in the list can be selected to go to it directly.']:s.body);
+  stBody.innerHTML=(g?'<p class="stage-h">'+g.label.charAt(0).toUpperCase()+g.label.slice(1)+'</p>':'')+body.map(p=>'<p>'+p+'</p>').join('')+(s.apps?appsList():'')+(g&&g.cmp?'<div id="cmpSlot"></div>':'')+(s.extra?s.extra():'');
+  const slot=document.getElementById('cmpSlot');if(slot)slot.appendChild(cmpBox);storyEl.scrollTop=0;
+  stPrev.disabled=step===0&&stPart===0;
+  let nx=step===STEPS.length-1&&stPart===n-1?'Restart':'Next';
+  stNext.textContent=nx;}
+function setStage(k,instant){const s=STEPS[step];stPart=clamp(k,0,partsOf(s)-1);
+  if(s.apps){if(stPart===0){selectSection('ALL',false);flyTo(s.view,instant);}else{const S=SECTIONS[stPart-1];seen.add(S.id);selectSection(S.id,!instant);if(instant)flyTo(S.view,true);}}
+  else if(s.stages){const g=s.stages[stPart];if(g.mode!=null)setMode(g.mode);flyTo(g.view,instant);}
+  renderStory();}
+function setStep(i,instant,atEnd){step=clamp(i,0,STEPS.length-1);const s=STEPS[step];
+  stDots.querySelectorAll('button').forEach((b,k)=>{if(k===step)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
+  dfosT=s.dfos?1:0;pulseSpeed=s.dfos?1/14:1/7;pulseT0=simT;
+  syncPanels();
+  /* the applications step always opens the waterfall card, even if it was hidden earlier */
+  mainEl.classList.toggle('wf-first',!!s.apps);if(s.apps&&!panels.side)setPanel('side',true);
+  setMode(s.mode);clearTen();selectSection(s.sec||'ALL',false);
+  stPart=atEnd?partsOf(s)-1:0;
+  if(s.apps||s.stages){setStage(stPart,instant);return;}
+  renderStory();
+  if(s.tenant)tenantSequence(instant);else if(s.intro)introSequence(instant);else flyTo(s.view,instant,s.dur);}
+function introSequence(instant){clearTen();flyTo(HWV,true);if(reduceMotion)return;tenTimers.push(setTimeout(()=>{if(STEPS[step].intro)flyTo(INTROV,false,4200);},4200));}
+let tw=null,lastView=null;
+function flyTo(v,instant,dur){lastView=v;const close=!!v.close;const fitK=!close&&camera.aspect<1.25?Math.min(1.8,1.25/camera.aspect):1;
+  const tgt=new V3(...v.target),pos=tgt.clone().add(new V3(...v.pos).sub(tgt).multiplyScalar(fitK));
+  if(instant||reduceMotion){camera.position.copy(pos);controls.target.copy(tgt);tw=null;return;}
+  const p0=camera.position.clone(),q0=controls.target.clone(),travel=q0.distanceTo(tgt),o0=p0.clone().sub(q0).length(),o1=pos.clone().sub(tgt).length();
+  /* a long move first pulls back so both places are in view, then moves in; a short move stays direct */
+  const out=clamp(travel/(o0+o1+1e-6)*0.9,0,2.2);
+  tw={t0:performance.now(),d:dur||clamp(1700+travel*5,1900,3600),p0,p1:pos,q0,q1:tgt,out};}
+controls.addEventListener('start',()=>{tw=null;clearTen();});
+function tween(now){if(!tw)return;const k=Math.min(1,(now-tw.t0)/tw.d),e=0.5-0.5*Math.cos(Math.PI*k),b=Math.sin(Math.PI*k);
+  const tg=tw.q0.clone().lerp(tw.q1,e),off=tw.p0.clone().sub(tw.q0).lerp(tw.p1.clone().sub(tw.q1),e);
+  off.multiplyScalar(1+tw.out*b);off.y+=tw.out*b*12;
+  controls.target.copy(tg);camera.position.copy(tg).add(off);if(k>=1){camera.position.copy(tw.p1);controls.target.copy(tw.q1);tw=null;}}
+document.addEventListener('keydown',e=>{if(e.target.closest&&e.target.closest('input,textarea,select,button,a,summary'))return;
+  if(TEN.isOpen()||e.metaKey||e.ctrlKey||e.altKey)return;if(e.key==='ArrowRight'){e.preventDefault();goNext();}else if(e.key==='ArrowLeft'){e.preventDefault();goPrev();}});
+stBody.addEventListener('click',e=>{const pb=e.target.closest('[data-part]');if(pb){setStage(+pb.dataset.part);return;}if(e.target.closest('[data-open-tenant]'))tenantSequence(false);if(e.target.closest('[data-hw]')){clearTen();flyTo(HWV,false,2000);}});
+
+
+/* ---------- Panel views and the section waterfall ---------- */
+let selSec='B',secLast=null;const SW=280,SH=150;const wfC=document.getElementById('wf');wfC.width=SW;wfC.height=SH;const wfx2=wfC.getContext('2d');
+const secOf=id=>id==='ALL'?ALLSEC:SECTIONS.find(x=>x.id===id);
+function secRow(t){const S=secOf(selSec);
+  if(secLast!==selSec){secLast=selSec;wfx2.fillStyle='#0B1220';wfx2.fillRect(0,0,SW,SH);document.getElementById('wfName').textContent=S.name;document.getElementById('wfEnd').textContent=(S.lengthM/1000).toFixed(1)+' km';for(let i=0;i<SH;i++)secRow(t-(SH-i)/15);return;}
+  wfx2.drawImage(wfC,0,0,SW,SH-1,0,1,SW,SH-1);const img=wfx2.createImageData(SW,1),d=img.data,span=S.u1-S.u0;
+  for(let c=0;c<SW;c++){let v=0;for(let k=0;k<3;k++)v=Math.max(v,signalU(S.u0+span*(c+(k+.5)/3)/SW,t));v=Math.min(1,0.07+0.12*Math.random()+v);const li=(v*255|0)*3;d[c*4]=LUT[li];d[c*4+1]=LUT[li+1];d[c*4+2]=LUT[li+2];d[c*4+3]=255;}
+  wfx2.putImageData(img,0,0);}
+function selectSection(id,fly){if(fly&&!panels.side)setPanel('side',true);if(fly&&window.innerWidth<=820)document.getElementById('stage').scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'});selSec=id;stBody.querySelectorAll('[data-sec-x]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.sec===id)));if(fly&&id!=='ALL')flyTo(secOf(id).view);}
+
+/* ---------- The tenant's monitor in the office tower ---------- */
+let monAcc=0;
+function drawMonitor(){const g=monG,W=1024,H=620;g.fillStyle='#E7E5E1';g.fillRect(0,0,W,H);
+  g.fillStyle='#E3E0DB';g.fillRect(0,0,196,H);g.strokeStyle='#C05A24';g.lineWidth=7;g.beginPath();g.arc(30,32,13,0.6,5.7);g.stroke();
+  g.fillStyle='#1F2430';g.font='bold 22px sans-serif';g.fillText('FiberVM',52,40);
+  const card=(y,h,lines)=>{g.fillStyle='#FFFFFF';g.fillRect(12,y,172,h);lines.forEach((l,i)=>{g.fillStyle=i?'#6B7180':'#1F2430';g.font=(i?'13px':'bold 16px')+' sans-serif';g.fillText(l,22,y+24+i*20);});};
+  card(64,62,['6 streams','2 sites · 15.700 MB/s']);card(136,96,['Rail corridor','1 kHz · 1.63 m','Overview  Analysis']);
+  g.font='13px monospace';['Highway','  2 kHz | 1 m','  1 kHz | 4 m','  500 Hz | 8 m','Rail corridor','  1 kHz | 1.63 m','  500 Hz | 8.16 m','  500 Hz | 16.3 m'].forEach((l,i)=>{
+    if(i===5){g.fillStyle='#F3D8C8';g.fillRect(8,252+i*24-16,180,22);}g.fillStyle=l.startsWith(' ')?'#1F2430':'#7A8090';g.fillText(l,16,252+i*24);});
+  g.fillStyle='#FFFFFF';g.fillRect(208,12,500,596);g.strokeStyle='#BD5D29';g.lineWidth=3;g.strokeRect(222,62,472,500);
+  g.fillStyle='#6B7180';g.font='bold 12px sans-serif';g.fillText('WATERFALL',222,34);g.fillStyle='#1F2430';g.fillRect(310,22,64,20);g.fillStyle='#FFFFFF';g.font='12px monospace';g.fillText('● LIVE',318,36);
+  g.imageSmoothingEnabled=false;g.drawImage(TIERS[0].c,224,64,468,496);g.fillStyle='#BD5D29';g.fillRect(420,46,110,16);g.fillStyle='#FFFFFF';g.fillText('ch 578 · 943 m',426,58);
+  g.strokeStyle='rgba(242,163,100,.9)';g.setLineDash([5,4]);g.beginPath();g.moveTo(475,64);g.lineTo(475,560);g.stroke();g.setLineDash([]);
+  g.fillStyle='#FFFFFF';g.fillRect(720,12,292,596);g.fillStyle='#F1ECE3';g.fillRect(730,50,272,520);
+  g.fillStyle='#CFE6C3';[[780,140,40,26],[930,420,46,30],[800,470,30,22]].forEach(([x,y,a,b])=>{g.beginPath();g.ellipse(x,y,a,b,0.4,0,7);g.fill();});
+  g.strokeStyle='#FFFFFF';g.lineWidth=5;[[730,200,1002,170],[860,50,900,570],[730,380,1002,420]].forEach(([a,b,c,d])=>{g.beginPath();g.moveTo(a,b);g.lineTo(c,d);g.stroke();});
+  g.strokeStyle='rgba(40,20,60,.9)';g.lineWidth=11;g.beginPath();g.moveTo(760,540);g.lineTo(975,80);g.stroke();
+  const row=TIERS[0].g.getImageData(0,0,TIERS[0].cols,1).data;g.lineWidth=7;for(let i=0;i<40;i++){const k=Math.floor(i/40*TIERS[0].cols)*4;g.strokeStyle='rgb('+row[k]+','+row[k+1]+','+row[k+2]+')';
+    g.beginPath();g.moveTo(760+215*i/40,540-460*i/40);g.lineTo(760+215*(i+1)/40,540-460*(i+1)/40);g.stroke();}
+  g.fillStyle='#BD5D29';g.beginPath();g.arc(868,310,8,0,7);g.fill();g.fillStyle='#6B7180';g.font='bold 12px sans-serif';g.fillText('ROUTE MAP',732,34);
+  monTex.needsUpdate=true;}
+
+/* ---------- Toolbar ---------- */
+let running=!reduceMotion,showLabels=true;
+const btnMotion=document.getElementById('btnMotion'),btnLabels=document.getElementById('btnLabels');
+function syncMotion(){btnMotion.textContent=running?'Pause motion':'Play motion';btnMotion.setAttribute('aria-pressed',String(!running));}
+btnMotion.addEventListener('click',()=>{running=!running;syncMotion();});
+btnLabels.addEventListener('click',()=>{showLabels=!showLabels;labelsEl.hidden=!showLabels;btnLabels.textContent=showLabels?'Hide labels':'Show labels';btnLabels.setAttribute('aria-pressed',String(showLabels));});
+document.getElementById('btnView').addEventListener('click',()=>flyTo(lastView||STEPS[step].view));
+syncMotion();
+const dragRotate=document.getElementById('dragRotate'),dragPan=document.getElementById('dragPan'),dragScroll=document.getElementById('dragScroll'),hintEl=document.getElementById('hint');
+controls.enablePan=true;controls.screenSpacePanning=true;
+function setDrag(pan){const scroll=pan==='scroll';pan=pan===true;controls.mouseButtons={LEFT:pan?THREE.MOUSE.PAN:THREE.MOUSE.ROTATE,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:pan?THREE.MOUSE.ROTATE:THREE.MOUSE.PAN};
+  controls.touches={ONE:pan?THREE.TOUCH.PAN:THREE.TOUCH.ROTATE,TWO:THREE.TOUCH.DOLLY_PAN};
+  dragRotate.setAttribute('aria-pressed',String(!pan&&!scroll));dragPan.setAttribute('aria-pressed',String(pan));dragScroll.setAttribute('aria-pressed',String(scroll));
+  hintEl.textContent=(pan?'Drag to pan · right-drag to rotate':'Drag to rotate · right-drag or Shift-drag to pan')+' · scroll or pinch to zoom · W A S D keys or the pad to move';
+  renderer.domElement.style.cursor=pan?'move':'grab';
+  renderer.domElement.style.touchAction=scroll?'pan-y':'none';if(scroll)controls.touches.ONE=null;
+}
+dragRotate.addEventListener('click',()=>setDrag(false));dragPan.addEventListener('click',()=>setDrag(true));dragScroll.addEventListener('click',()=>setDrag('scroll'));setDrag(matchMedia('(max-width:820px)').matches?'scroll':false);
+// Let a one-finger gesture scroll the page until the visitor chooses a camera mode.
+['touchstart','touchmove'].forEach(type=>renderer.domElement.addEventListener(type,e=>{
+  if(controls.touches.ONE===null&&e.touches.length===1)e.stopImmediatePropagation();
+},{capture:true,passive:true}));
+controls.addEventListener('change',()=>{const t=controls.target;const cx=clamp(t.x,-230,210),cz=clamp(t.z,-270,560),cy=clamp(t.y,0,45);
+  if(cx!==t.x||cy!==t.y||cz!==t.z){const d=new V3(cx-t.x,cy-t.y,cz-t.z);t.add(d);camera.position.add(d);}});
+
+/* ---------- Navigation pad and keys ---------- */
+function nav(dir){tw=null;const d=camera.position.distanceTo(controls.target);
+  if(dir==='home'){flyTo(lastView||STEPS[step].view);return;}
+  if(dir==='in'||dir==='out'){const f=dir==='in'?0.85:1/0.85,off=camera.position.clone().sub(controls.target).multiplyScalar(f);
+    const L=clamp(off.length(),controls.minDistance,controls.maxDistance);off.setLength(L);camera.position.copy(controls.target).add(off);return;}
+  const fwd=new V3();camera.getWorldDirection(fwd);fwd.y=0;if(fwd.lengthSq()<1e-6)fwd.set(0,0,-1);fwd.normalize();const right=new V3(-fwd.z,0,fwd.x);
+  const step=d*0.08,v=new V3();if(dir==='up')v.copy(fwd).multiplyScalar(step);if(dir==='down')v.copy(fwd).multiplyScalar(-step);
+  if(dir==='right')v.copy(right).multiplyScalar(step);if(dir==='left')v.copy(right).multiplyScalar(-step);
+  controls.target.add(v);camera.position.add(v);controls.dispatchEvent({type:'change'});}
+let navTimer=null;
+const navpad=document.querySelector('.navpad');
+navpad.addEventListener('pointerdown',e=>{const b=e.target.closest('[data-nav]');if(!b)return;e.preventDefault();const d=b.dataset.nav;nav(d);
+  if(d!=='home'){clearInterval(navTimer);navTimer=setInterval(()=>nav(d),90);}});
+['pointerup','pointerleave','pointercancel'].forEach(ev=>navpad.addEventListener(ev,()=>{clearInterval(navTimer);navTimer=null;}));
+navpad.addEventListener('keydown',e=>{const b=e.target.closest('[data-nav]');if(b&&(e.key==='Enter'||e.key===' ')){e.preventDefault();nav(b.dataset.nav);}});
+document.addEventListener('keydown',e=>{if(e.target.closest&&e.target.closest('input,textarea,select,button,a,summary'))return;if(e.metaKey||e.ctrlKey||e.altKey)return;
+  if(TEN.isOpen())return;const m={w:'up',a:'left',s:'down',d:'right','+':'in','=':'in','-':'out'}[e.key.toLowerCase()];if(m){e.preventDefault();nav(m);}});
+
+/* ---------- Retractable panels ---------- */
+const mainEl=document.querySelector('.main'),storyEl=document.getElementById('story'),sideEl=document.getElementById('side'),tabStory=document.getElementById('tabStory'),tabSide=document.getElementById('tabSide'),btnPanels=document.getElementById('btnPanels');
+const panels={story:true,side:true};
+
+const mobileLayout=matchMedia('(max-width:820px)');
+function syncPanels(){
+  ['story','side'].forEach(name=>{
+    const el=name==='story'?storyEl:sideEl,tab=name==='story'?tabStory:tabSide;
+    const unavailable=name==='side'&&!!STEPS[step].noSide;
+    const visible=!unavailable&&(mobileLayout.matches||panels[name]);
+    el.hidden=unavailable;el.classList.toggle('off',!visible);
+    el.setAttribute('aria-hidden',String(!visible));el.inert=!visible;tab.hidden=visible||unavailable||mobileLayout.matches;
+  });
+  const both=!panels.story&&!panels.side;btnPanels.textContent=both?'Show panels':'Hide panels';btnPanels.setAttribute('aria-pressed',String(both));
+}
+function setPanel(name,open){panels[name]=open;syncPanels();}
+mobileLayout.addEventListener('change',()=>{syncPanels();setDrag(mobileLayout.matches?'scroll':false);});
+document.getElementById('hideStory').addEventListener('click',()=>{setPanel('story',false);tabStory.focus();});
+document.getElementById('hideSide').addEventListener('click',()=>{setPanel('side',false);tabSide.focus();});
+tabStory.addEventListener('click',()=>setPanel('story',true));tabSide.addEventListener('click',()=>setPanel('side',true));
+btnPanels.addEventListener('click',()=>{const show=!panels.story&&!panels.side;setPanel('story',show);setPanel('side',show);});
+setPanel('story',panels.story);setPanel('side',panels.side);
+let viewOff=null;
+/* the story card sits on the left and the waterfall card on the right, so the view centre moves to the middle of the free area */
+function updateViewOffset(){const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;
+  const target=w>820?(panels.story?-Math.min(190,w*0.13):0)+(!sideEl.classList.contains('off')?Math.min(150,w*0.1):0):0;
+  const next=viewOff===null?target:viewOff+(target-viewOff)*0.12;if(viewOff!==null&&Math.abs(next-viewOff)<0.05)return;viewOff=Math.abs(next-target)<0.3?target:next;
+  if(Math.round(viewOff)!==0)camera.setViewOffset(w,h,Math.round(viewOff),0,w,h);else camera.clearViewOffset();camera.updateProjectionMatrix();}
+
+/* ---------- Per-frame update ---------- */
+const PHASES=['test','trial','adoption'];let lastKey='',requests=0;
+const BC=new V3(BX,4,BZ);
+function updateScene(t,dt){
+  if(reduceMotion||!running)modeT=modeTarget;else modeT+=(modeTarget-modeT)*Math.min(1,dt*1.1);if(Math.abs(modeTarget-modeT)<0.002)modeT=modeTarget;
+  const today=1-modeT;
+  /* inside view: roof and the south wall fade when the camera is near the building */
+  const near=clamp((95-camera.position.distanceTo(BC))/35,0,1);
+  roofM.opacity=1-0.92*near;fadeWallM.opacity=1-0.88*near;winM.opacity=1-near;roofM.depthWrite=fadeWallM.depthWrite=winM.depthWrite=near<0.02;roof.visible=roofM.opacity>0.03;
+  updateTown(t,dt);updateIntro(t,dt);dfosOn+=(dfosT-dfosOn)*Math.min(1,dt*2);pulseS.scale.setScalar(dfosOn>0.5?6:3.5);
+  /* agreements today: each provider asks for test, trial and adoption in turn */
+  const slot=Math.floor(t/2.2),j=slot%N,key=slot+'';
+  if(key!==lastKey){lastKey=key;if(today>0.5)requests++;}
+  const shown=today>0.5?Math.min(pile.length,requests):0;
+  pile.forEach((m,k)=>{const want=k<shown?1:(modeT>0.5&&k===0?1:0);m.material.opacity+=(want-m.material.opacity)*Math.min(1,dt*4);m.visible=m.material.opacity>0.02;});
+  setLabel(pileLabel,'<b>Agreements</b><span>'+(modeT>0.5?'One, with CoFiber':requests+' handled so far')+'</span>');
+  setLabel(bldLabel,'<b>Fiber owner\'s central office</b><span>'+(modeT>0.5?'One strand used, by CoFiber':N+' strands leased to '+N+' providers')+'</span>');
+  /* racks, strands, footprints */
+  for(let i=0;i<NMAX;i++){const p=PROV[i],present=i<N?1:0;p.on+=(present-p.on)*Math.min(1,dt*3);
+    const stag=clamp(modeT*1.5-i*0.04,0,1),rk=p.on*(1-stag);
+    p.rack.visible=rk>0.01;p.rack.scale.set(1,Math.max(0.01,rk),1);p.mats.forEach(m=>m.opacity=rk);
+    p.strand.visible=rk>0.01;p.strandMat.opacity=rk;p.spark.visible=rk>0.3;
+    if(p.spark.visible){p.spark.position.copy(p.strandCurve.getPoint(fract(t*0.5+i*0.13)));p.spark.material.opacity=rk;}
+    p.rackLabel.show=rk>0.6;p.foot.material.opacity=p.on*sstep(0.3,1,stag)*0.9;
+    /* services */
+    const vis=p.on>0.02;p.app.visible=p.pole.visible=vis;p.appLabel.show=vis&&p.on>0.6;
+    if(!vis){p.fToday.update(t,0);p.fVM.update(t,0);continue;}
+    const tg=p.target||appPos(i,N);p.cur.lerp(tg,Math.min(1,dt*3));p.app.position.copy(p.cur);p.app.scale.setScalar(0.3+0.7*p.on);
+    p.app.rotation.y=Math.atan2(camera.position.x-p.cur.x,camera.position.z-p.cur.z);
+    p.pole.position.set(p.cur.x,(p.cur.y-1.25)/2,p.cur.z);p.pole.scale.y=p.cur.y-1.25;
+    p.scrMat.map=(i===0&&STEPS[step].tenant)?monTex:(modeT>0.5?TIERS[p.tier].tex:TIERS[0].tex);
+    p.fToday.update(t,today*p.on);p.fVM.update(t,sstep(0.5,1,modeT)*p.on);
+    setLabel(p.appLabel,'<b>'+p.name+'</b>'+(modeT>0.5?'<span class="ok">From FiberVM · '+TIERS[p.tier].name+'</span>':'<span class="wait">From its own rack</span>'));
+    p.appLabel.pos.copy(p.cur).add(new V3(0,1.9,0));}
+  for(let i=0;i<NMAX;i++){const e=PROV[i].ent,want=(i<N&&modeT>0.8&&STEPS[step].ents!==false)?1:0;e.on+=(want-e.on)*Math.min(1,dt*(want?1.2-i*0.04:3));if(e.on<0.003)e.on=0;
+    const vis=e.on>0.02;e.g.visible=e.pole.visible=e.badge.visible=vis;e.L.show=vis&&e.on>0.6;e.f.update(t,sstep(0.2,1,e.on));if(!vis)continue;
+    const tg=e.target||entPos(i,N);e.cur.lerp(tg,Math.min(1,dt*3));const k=ease(clamp(e.on,0,1));
+    e.g.position.copy(e.cur).add(new V3(0,-3*(1-k),0));e.g.scale.setScalar(0.2+0.8*k);e.g.rotation.y=Math.atan2(camera.position.x-e.cur.x,camera.position.z-e.cur.z);
+    e.pole.position.set(e.cur.x,Math.max(0.1,(e.g.position.y-1.1)/2),e.cur.z);e.pole.scale.y=Math.max(0.01,e.g.position.y-1.1);
+    e.badge.position.copy(e.g.position).add(new V3(0,1.6,0));e.badge.material.opacity=0.5+0.4*Math.sin(t*3+i);e.L.pos.copy(e.g.position).add(new V3(0,1.8,0));}
+  freedLabel.show=modeT>0.7;
+  /* CoFiber unit */
+  const uk=sstep(0.3,0.9,modeT);unitGlow.visible=uk>0.01;unitGlow.material.opacity=0.5*uk*(0.8+0.2*Math.sin(t*3));unit.visible=uk>0.01;unit.scale.set(1,Math.max(0.01,uk),1);unitMats.forEach(m=>m.opacity=uk);unitStrand.opacity=uk;unitLabel.show=uk>0.6;
+  /* hub and data products */
+  const vk=sstep(0.25,1,modeT);
+  hallGlow.material.opacity=0.12+0.35*vk;vmGroup.visible=vk>0.01;vmMats.forEach(o=>o.m.opacity=o.op*vk);
+  vmGroup.children.forEach((g,i)=>{const s=g.userData.s;if(s){s.visible=vk>0.01;s.material.opacity=vk*(0.55+0.3*Math.sin(t*3+i));}});tierLbl.forEach(l=>l.show=vk>0.6);tierHead.show=vk>0.6;
+  hubLight.intensity=1.2*vk;upFlow.update(t,vk);hubLabel.show=vk>0.6;
+  setLabel(hubLabel,'<b>CoFiber campus · FiberVM hub</b><span>'+(vk>0.5?'Receives one stream and serves data products at several resolutions':'CoFiber headquarters')+'</span>');hubLabel.show=true;
+  monAcc+=dt;if(monAcc>0.12&&STEPS[step].tenant){monAcc=0;drawMonitor();}
+}
+
+/* ---------- Labels, resize and loop ---------- */
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();viewOff=null;}
+if(window.ResizeObserver)new ResizeObserver(resize).observe(stage);
+window.addEventListener('resize',resize);
+const tmp=new V3();
+function updateLabels(){if(!showLabels)return;const w=stage.clientWidth,h=stage.clientHeight;labelsEl.style.visibility=camera.position.distanceTo(PROV[0].cur)<9?'hidden':'';const inIntro=camera.position.distanceTo(ICEN)<260;scene.fog.near=inIntro?140:520;scene.fog.far=inIntro?320:1500;
+  for(const L of labels){let vis=L.show&&(!inIntro||L.pos.distanceTo(ICEN)<160);if(vis&&L.near&&camera.position.distanceTo(L.pos)>L.near)vis=false;
+    if(!vis){L.el.style.visibility='hidden';continue;}tmp.copy(L.pos).project(camera);
+    if(tmp.z>1||tmp.z<-1||Math.abs(tmp.x)>1.1||Math.abs(tmp.y)>1.1){L.el.style.visibility='hidden';continue;}
+    L.el.style.visibility='';L.el.style.transform='translate('+((tmp.x+1)/2*w).toFixed(1)+'px,'+((1-tmp.y)/2*h).toFixed(1)+'px) translate(-50%,'+(L.anchor==='below'?'0':'-100%')+')';}}
+let simT=4,last=performance.now(),wfAcc=0;
+function frame(now){const dt=Math.min(0.05,(now-last)/1000);last=now;requestAnimationFrame(frame);if(!document.body.classList.contains('demo-ready')||document.hidden||TEN.isOpen())return;
+  if(running){simT+=dt;wfAcc+=dt;let g=0;while(wfAcc>=1/15&&g++<3){wfAcc-=1/15;wfRow(simT);secRow(simT);}if(g>=3)wfAcc=0;}
+  updateScene(simT,running?dt:0.0001);
+  updateViewOffset();tween(now);controls.update();renderer.render(scene,camera);updateLabels();}
+renderTable();resize();setStep(0,true);modeT=modeTarget;drawMonitor();
+for(let i=0;i<60;i++)wfRow(simT-(60-i)/15);
+requestAnimationFrame(frame);
+/* ---------- Tenant interface replica (synthetic data) ---------- */
+const TEN=(function(){
+  const $=id=>document.getElementById(id);
+  const root=$('tenant');
+  const SITES=[{name:'Highway',lengthM:1200,kind:'road',streams:[[2000,1],[1000,4],[500,8]]},
+               {name:'Rail corridor',lengthM:1630,kind:'rail',streams:[[1000,1.63],[500,8.16],[500,16.3]]}];
+  const fmtR=r=>r>=1000?(r/1000)+' kHz':r+' Hz';
+  const ST=[];SITES.forEach((s,si)=>s.streams.forEach(([rate,dx],k)=>{const ch=Math.round(s.lengthM/dx);ST.push({id:si+'-'+k,site:s,rate,dx,ch,mbs:rate*ch*4/1e6,label:fmtR(rate)+' | '+dx+' m'});}));
+  const total=ST.reduce((a,s)=>a+s.mbs,0);
+  $('tSubN').textContent=ST.length+' streams';$('tSubM').textContent=SITES.length+' sites · '+total.toFixed(3)+' MB/s';
+  let lh='';SITES.forEach(s=>{lh+='<div class="t-site"><span class="t-eyebrow">'+s.name+'</span><span class="t-badge">PUBLISHING</span></div>';
+    ST.filter(x=>x.site===s).forEach(x=>{lh+='<button type="button" class="t-stream" data-id="'+x.id+'" aria-pressed="false"><span>'+x.label+'</span><span>'+x.mbs.toFixed(3)+'</span></button>';});});
+  $('tList').innerHTML=lh;
+  const S={auto:false,open:false,signed:false,stream:null,view:'overview',stacked:false,live:true,playing:true,speed:1,win:10,units:'m',pal:'inferno',lower:0,upper:1.6,overlay:'intensity',style:'color',zoom:1,span:2,fft:256,sel:null,hover:null,hoverK:0};
+  const RH=20,MAXS=60,MAXR=RH*MAXS;
+  let COLS=0,buf=null,head=0,count=0,tNow=0,viewEnd=0,rowAcc=0,srcs=[],bursts=[],colFloor=null;
+
+  /* palettes */
+  function mkLUT(stops){const o=new Uint8ClampedArray(768);for(let i=0;i<256;i++){const x=i/255;let k=0;while(k<stops.length-2&&x>stops[k+1][0])k++;const f=(x-stops[k][0])/(stops[k+1][0]-stops[k][0]);
+    for(let j=0;j<3;j++)o[i*3+j]=stops[k][1][j]+(stops[k+1][1][j]-stops[k][1][j])*f;}return o;}
+  const LUTS={inferno:mkLUT([[0,[0,0,4]],[.15,[31,12,72]],[.35,[85,15,109]],[.5,[136,34,106]],[.65,[186,54,85]],[.8,[227,89,51]],[.9,[249,140,10]],[1,[252,255,164]]]),
+    viridis:mkLUT([[0,[68,1,84]],[.25,[59,82,139]],[.5,[33,145,140]],[.75,[94,201,98]],[1,[253,231,37]]]),gray:mkLUT([[0,[10,10,10]],[1,[245,245,245]]])};
+
+  /* synthetic source along the route */
+  function spawn(){const L=S.stream.site.lengthM,kind=S.stream.site.kind;
+    if(Math.random()<(kind==='road'?0.7:0.35)/RH){const dir=Math.random()<0.5?1:-1,v=(12+Math.random()*16)*dir;srcs.push({x:dir>0?-30:L+30,v,a:0.25+Math.random()*0.35,w:10+Math.random()*14});}
+    if(kind==='rail'&&Math.random()<0.05/RH&&!srcs.some(s=>s.train)){const dir=Math.random()<0.5?1:-1;srcs.push({x:dir>0?-20:L+20,v:22*dir,a:0.4,len:380,train:true});}
+    if(Math.random()<0.3/RH)bursts.push({x:Math.random()*L,t0:tNow,dur:1+Math.random()*3,a:0.7+Math.random()*0.7,w:4+Math.random()*4});
+    if(Math.random()<0.04/RH)srcs.push({x:Math.random()*L,v:(Math.random()<0.5?1:-1)*1.4,a:0.3,w:3,walk:true,life:25});}
+  function genRow(){const dt=1/RH;tNow+=dt;spawn();const L=S.stream.site.lengthM;
+    srcs.forEach(s=>{s.x+=s.v*dt;if(s.life!=null)s.life-=dt;});
+    srcs=srcs.filter(s=>(s.life==null||s.life>0)&&(s.train?(s.v>0?s.x-s.len<L+20:s.x+s.len>-20):(s.x>-60&&s.x<L+60)));
+    bursts=bursts.filter(b=>tNow-b.t0<b.dur);
+    const off=head*COLS,step=Math.sin(tNow*11)>0.7;
+    for(let c=0;c<COLS;c++){const xm=(c+0.5)/COLS*L;let v=colFloor[c]+0.1*Math.random();
+      for(const s of srcs){if(s.train){const tl=s.x-Math.sign(s.v)*s.len,lo=Math.min(s.x,tl),hi=Math.max(s.x,tl);if(xm>lo&&xm<hi){const e=Math.min(1,(xm-lo)/30,(hi-xm)/30);v+=s.a*e*(0.45+0.55*Math.random());}}
+        else{const d=(xm-s.x)/s.w;if(d*d<16)v+=s.a*Math.exp(-0.5*d*d)*(s.walk?(step?1:0.15):(0.7+0.3*Math.random()));}}
+      for(const b of bursts){const d=(xm-b.x)/b.w;if(d*d<16)v+=b.a*Math.exp(-0.5*d*d)*(Math.random()>0.3?1:0.3);}
+      buf[off+c]=v;}
+    head=(head+1)%MAXR;count=Math.min(MAXR,count+1);}
+  const rowOff=k=>(((head-1-k)%MAXR+MAXR)%MAXR)*COLS;
+  function resetData(){const st=S.stream;COLS=Math.min(st.ch,600);buf=new Float32Array(MAXR*COLS);head=0;count=0;tNow=0;srcs=[];bursts=[];
+    colFloor=new Float32Array(COLS);for(let c=0;c<COLS;c++)colFloor[c]=0.12+0.06*Math.random()*(Math.random()<0.12?2.5:1);
+    for(let i=0;i<RH*40;i++)genRow();viewEnd=tNow;S.sel=Math.round(COLS*0.58);S.hover=null;}
+
+  /* helpers */
+  function fitC(cv){const dpr=Math.min(window.devicePixelRatio||1,2),w=cv.clientWidth,h=cv.clientHeight;const W=Math.max(1,Math.round(w*dpr)),H=Math.max(1,Math.round(h*dpr));
+    if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;}const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);return {g,w,h};}
+  const chOf=c=>Math.floor((c+0.5)*S.stream.ch/COLS);
+  const posM=c=>(c+0.5)/COLS*S.stream.site.lengthM;
+  const fmtPos=m=>S.units==='m'?Math.round(m)+' m':Math.round(m*3.28084)+' ft';
+  const mapV=v=>{const up=0.9*S.upper,lo=up*S.lower;return clamp((v-lo)/Math.max(0.01,up-lo),0,1);};
+  const FONT='11px '+getComputedStyle(document.body).getPropertyValue('font-family');
+  const MONO='11px Consolas, Inconsolata, ui-monospace, monospace';
+  let wfOff=document.createElement('canvas'),wfGeom=null;
+
+  function drawWf(){const cv=$('tWf');if(!cv.clientWidth)return;const {g,w,h}=fitC(cv);
+    const L=48,R=14,T=26,B=40,pw=w-L-R,ph=h-T-B;wfGeom={L,T,pw,ph};
+    g.fillStyle='#FFFFFF';g.fillRect(0,0,w,h);
+    const rows=S.win*RH;if(wfOff.width!==COLS||wfOff.height!==rows){wfOff.width=COLS;wfOff.height=rows;}
+    const ox=wfOff.getContext('2d'),img=ox.createImageData(COLS,rows),d=img.data,lut=LUTS[S.pal];
+    const endK=Math.max(0,Math.round((tNow-viewEnd)*RH));
+    for(let r=0;r<rows;r++){const k=endK+r;if(k>=count){for(let c=0;c<COLS;c++){const i=(r*COLS+c)*4;d[i]=0;d[i+1]=0;d[i+2]=4;d[i+3]=255;}continue;}
+      const o=rowOff(k);for(let c=0;c<COLS;c++){const li=(mapV(buf[o+c])*255|0)*3,i=(r*COLS+c)*4;d[i]=lut[li];d[i+1]=lut[li+1];d[i+2]=lut[li+2];d[i+3]=255;}}
+    ox.putImageData(img,0,0);g.imageSmoothingEnabled=false;g.drawImage(wfOff,L,T,pw,ph);
+    g.fillStyle='#4B5160';g.font=MONO;g.textAlign='right';g.textBaseline='middle';
+    const tick=S.win<=10?2:S.win<=30?5:10;
+    for(let s=0;s<=S.win;s+=tick){const y=T+s/S.win*ph;g.fillText(s===0&&S.live?'now':'-'+s+' s',L-6,y);g.fillRect(L-3,y,3,1);}
+    g.save();g.translate(12,T+ph/2);g.rotate(-Math.PI/2);g.textAlign='center';g.font=FONT;g.fillText('TIME',0,0);g.restore();
+    g.textAlign='center';g.textBaseline='top';const nT=8;
+    for(let i=0;i<=nT;i++){const c=Math.min(COLS-1,Math.round(i/nT*(COLS-1))),x=L+(c+0.5)/COLS*pw;g.fillStyle='#4B5160';g.fillText(String(chOf(c)),x,T+ph+4);g.fillStyle='#7A8090';g.fillText(fmtPos(posM(c)),x,T+ph+17);}
+    g.textAlign='left';g.fillStyle='#4B5160';g.font=FONT;g.fillText('CHANNEL',L,T+ph+29);g.textAlign='right';g.fillText('POSITION ALONG FIBER ('+S.units.toUpperCase()+')',L+pw,T+ph+29);
+    const drawCh=(c,strong)=>{const x=L+(c+0.5)/COLS*pw;g.strokeStyle=strong?'rgba(242,163,100,.95)':'rgba(255,255,255,.5)';g.setLineDash([4,3]);g.beginPath();g.moveTo(x,T);g.lineTo(x,T+ph);g.stroke();g.setLineDash([]);
+      if(strong){const txt='ch '+chOf(c)+' · '+fmtPos(posM(c));g.font=MONO;const tw=g.measureText(txt).width+12;const bx=clamp(x-tw/2,L,L+pw-tw);g.fillStyle='#BD5D29';g.fillRect(bx,T-20,tw,16);g.fillStyle='#FFFFFF';g.textAlign='left';g.textBaseline='middle';g.fillText(txt,bx+6,T-12);}};
+    if(S.hover!=null&&S.hover!==S.sel)drawCh(S.hover,false);if(S.sel!=null)drawCh(S.sel,true);
+    const c=S.hover!=null?S.hover:S.sel;if(c!=null){const k=endK+S.hoverK;const v=k<count?buf[rowOff(k)+c]:0;
+      $('tRead').textContent='ch '+chOf(c)+' · '+fmtPos(posM(c))+' · -'+(S.hoverK/RH).toFixed(1)+' s · '+(v*10).toFixed(2);}}
+
+  /* procedural base map of an imaginary area */
+  let mapBase=null,mapKey='';
+  const R0=[0.15,0.85],R1=[0.86,0.13];
+  function mapXY(u,w,h){const z=S.zoom,cx=w/2,cy=h/2;const x=(R0[0]+(R1[0]-R0[0])*u)*w,y=(R0[1]+(R1[1]-R0[1])*u)*h;return [cx+(x-cx)*z,cy+(y-cy)*z];}
+  function buildMap(w,h){const key=w+'x'+h+S.style+S.zoom;if(key===mapKey&&mapBase)return;mapKey=key;mapBase=document.createElement('canvas');const dpr=Math.min(window.devicePixelRatio||1,2);
+    mapBase.width=Math.round(w*dpr);mapBase.height=Math.round(h*dpr);const g=mapBase.getContext('2d');g.scale(dpr,dpr);const col=S.style==='color';
+    let seed=5;const rr=()=>{seed=(seed*16807)%2147483647;return(seed-1)/2147483646;};
+    g.save();g.translate(w/2,h/2);g.scale(S.zoom,S.zoom);g.translate(-w/2,-h/2);
+    g.fillStyle=col?'#F1ECE3':'#EFEFEF';g.fillRect(-w,-h,3*w,3*h);
+    for(let i=0;i<9;i++){g.fillStyle=col?'#CFE6C3':'#DFDFDF';g.beginPath();g.ellipse(rr()*w,rr()*h,30+rr()*70,20+rr()*50,rr()*3,0,7);g.fill();}
+    for(let i=0;i<2;i++){g.fillStyle=col?'#AACDEA':'#D2D2D2';g.beginPath();g.ellipse(rr()*w,rr()*h,18+rr()*30,12+rr()*22,rr()*3,0,7);g.fill();}
+    for(let i=0;i<70;i++){const x=rr()*w,y=rr()*h,bw=10+rr()*34,bh=8+rr()*24;g.save();g.translate(x,y);g.rotate((rr()-0.5)*0.9);g.fillStyle=col?(rr()<0.25?'#F2D5D2':'#E4DCD3'):'#E2E2E2';g.fillRect(-bw/2,-bh/2,bw,bh);g.strokeStyle=col?'#D3C7BB':'#CFCFCF';g.strokeRect(-bw/2,-bh/2,bw,bh);g.restore();}
+    const road=(pts,wd,major)=>{g.lineCap='round';g.lineJoin='round';g.strokeStyle=col?(major?'#E89A6B':'#D8D2C8'):'#C9C9C9';g.lineWidth=wd+2;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0]*w,p[1]*h):g.moveTo(p[0]*w,p[1]*h));g.stroke();
+      g.strokeStyle=col?(major?'#F6C3A0':'#FFFFFF'):'#FFFFFF';g.lineWidth=wd;g.stroke();};
+    for(let i=0;i<10;i++){const a=rr()*Math.PI,cx=rr(),cy=rr();road([[cx-Math.cos(a),cy-Math.sin(a)],[cx,cy],[cx+Math.cos(a)*1.2,cy+Math.sin(a)*1.2]],3,false);}
+    road([[0.0,0.3],[0.3,0.25],[0.55,0.32],[0.8,0.2],[1.0,0.22]],6,true);road([[0.62,0],[0.66,0.4],[0.6,0.7],[0.7,1]],6,true);road([[0.0,0.72],[0.35,0.68],[0.6,0.7],[1,0.62]],4,false);
+    g.restore();}
+  function drawMap(){const cv=$('tMap');if(!cv.clientWidth)return;const {g,w,h}=fitC(cv);buildMap(w,h);g.drawImage(mapBase,0,0,w,h);
+    const [x0,y0]=mapXY(0,w,h),[x1,y1]=mapXY(1,w,h);g.lineCap='round';g.strokeStyle='rgba(40,20,60,.85)';g.lineWidth=12;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();
+    const endK=Math.max(0,Math.round((tNow-viewEnd)*RH)),o=rowOff(endK),lut=LUTS[S.pal],n=Math.min(COLS,160);
+    if(S.overlay==='intensity'){g.lineCap='butt';g.lineWidth=8;for(let i=0;i<n;i++){const c0=Math.floor(i/n*COLS),c1=Math.floor((i+1)/n*COLS);let v=0;for(let c=c0;c<Math.max(c0+1,c1);c++)v=Math.max(v,buf[o+c]);const li=(mapV(v)*255|0)*3;
+      g.strokeStyle='rgb('+lut[li]+','+lut[li+1]+','+lut[li+2]+')';const [a,b]=mapXY(i/n,w,h),[cc,dd]=mapXY((i+1)/n,w,h);g.beginPath();g.moveTo(a,b);g.lineTo(cc,dd);g.stroke();}}
+    else{g.strokeStyle='rgba(91,46,140,.85)';g.lineWidth=8;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();}
+    if(S.sel!=null){const [mx,my]=mapXY((S.sel+0.5)/COLS,w,h);g.fillStyle='#FFFFFF';g.beginPath();g.arc(mx,my,7,0,7);g.fill();g.fillStyle='#BD5D29';g.beginPath();g.arc(mx,my,5,0,7);g.fill();
+      const txt='ch '+chOf(S.sel)+' · '+fmtPos(posM(S.sel));g.font=MONO;const tw=g.measureText(txt).width+12;const bx=clamp(mx+10,4,w-tw-4);g.fillStyle='#BD5D29';g.fillRect(bx,my-8,tw,16);g.fillStyle='#FFFFFF';g.textAlign='left';g.textBaseline='middle';g.fillText(txt,bx+6,my);}
+    g.fillStyle='#1F2430';g.font='bold 12px '+getComputedStyle(document.body).getPropertyValue('font-family');g.textAlign='center';g.fillText('N',w-20,22);g.beginPath();g.moveTo(w-20,30);g.lineTo(w-25,44);g.lineTo(w-15,44);g.closePath();g.fill();}
+
+  /* analysis: waveform and STFT of the selected channel */
+  function hash(n,c){let x=(n*374761393+c*668265263)|0;x=(x^(x>>>13))*1274126177|0;return ((x^(x>>>16))>>>0)/4294967296;}
+  function fft(re,im){const n=re.length;for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){let t=re[i];re[i]=re[j];re[j]=t;t=im[i];im[i]=im[j];im[j]=t;}}
+    for(let len=2;len<=n;len<<=1){const ang=-2*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang),hl=len>>1;for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let k=0;k<hl;k++){const a=i+k,b=a+hl,vr=re[b]*cr-im[b]*ci,vi=re[b]*ci+im[b]*cr;re[b]=re[a]-vr;im[b]=im[a]-vi;re[a]+=vr;im[a]+=vi;const t=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=t;}}}}
+  let wave=null;
+  function computeWave(){const fs=Math.min(1000,S.stream.rate),N=Math.round(S.span*fs),c=S.sel,arr=new Float32Array(N),f1=28+(c%7)*9,f2=105+(c%5)*21,endK=Math.max(0,Math.round((tNow-viewEnd)*RH));
+    for(let n=0;n<N;n++){const back=(N-1-n)/fs,kf=endK+back*RH,k0=Math.floor(kf),fr=kf-k0;const a0=k0<count?buf[rowOff(k0)+c]:0,a1=k0+1<count?buf[rowOff(k0+1)+c]:a0,env=a0*(1-fr)+a1*fr;
+      const gn=Math.round((viewEnd-back)*fs),tt=gn/fs;arr[n]=(0.25+env)*4.5*(Math.sin(2*Math.PI*f1*tt+c)+0.55*Math.sin(2*Math.PI*f2*tt+2*c)+0.9*Math.sin(2*Math.PI*9*tt+c*0.3))+1.6*(hash(gn,c)-0.5)+0.9*(hash(gn+7,c+3)-0.5);}
+    wave={arr,fs,N};}
+  function drawWave(){const cv=$('tWave');if(!cv.clientWidth||!wave)return;const {g,w,h}=fitC(cv);const L=40,R=10,T=8,B=22,pw=w-L-R,ph=h-T-B;g.fillStyle='#FFFFFF';g.fillRect(0,0,w,h);
+    g.font=MONO;g.fillStyle='#4B5160';g.textAlign='right';g.textBaseline='middle';[-10,-5,0,5,10].forEach(v=>{const y=T+(1-(v+10)/20)*ph;g.fillText(v.toFixed(1),L-6,y);g.fillStyle='#EEEAE4';g.fillRect(L,y,pw,1);g.fillStyle='#4B5160';});
+    g.textAlign='center';g.textBaseline='top';const st=S.span<=2?0.2:0.5;for(let s=0;s<=S.span+1e-6;s+=st){const x=L+pw-(s/S.span)*pw;g.fillText(s<1e-6?'now':'-'+s.toFixed(1)+' s',x,T+ph+5);}
+    g.strokeStyle='#C2643A';g.lineWidth=1.2;g.beginPath();const {arr,N}=wave;for(let i=0;i<pw;i++){const n0=Math.floor(i/pw*N),n1=Math.max(n0+1,Math.floor((i+1)/pw*N));let mn=1e9,mx=-1e9;for(let n=n0;n<n1;n++){mn=Math.min(mn,arr[n]);mx=Math.max(mx,arr[n]);}
+      const y0=T+(1-(clamp(mn,-10,10)+10)/20)*ph,y1=T+(1-(clamp(mx,-10,10)+10)/20)*ph;if(i===0)g.moveTo(L,y0);g.lineTo(L+i,y0);g.lineTo(L+i,y1);}g.stroke();}
+  let stftOff=document.createElement('canvas');
+  function drawStft(){const cv=$('tStft');if(!cv.clientWidth||!wave)return;const {g,w,h}=fitC(cv);const L=46,R=10,T=6,B=22,pw=w-L-R,ph=h-T-B;g.fillStyle='#FFFFFF';g.fillRect(0,0,w,h);
+    const M=S.fft,hop=M/8,{arr,N,fs}=wave,F=Math.max(1,Math.floor((N-M)/hop)+1),bins=M/2;stftOff.width=F;stftOff.height=bins;const ox=stftOff.getContext('2d'),img=ox.createImageData(F,bins),d=img.data;
+    const re=new Float32Array(M),im=new Float32Array(M),mags=new Float32Array(F*bins);let mx=-1e9;
+    for(let f=0;f<F;f++){for(let n=0;n<M;n++){const wv=0.5-0.5*Math.cos(2*Math.PI*n/(M-1));re[n]=(arr[f*hop+n]||0)*wv;im[n]=0;}fft(re,im);
+      for(let b=0;b<bins;b++){const db=10*Math.log10(re[b]*re[b]+im[b]*im[b]+1e-9);mags[f*bins+b]=db;if(db>mx)mx=db;}}
+    const lut=LUTS[S.pal];for(let f=0;f<F;f++)for(let b=0;b<bins;b++){const v=clamp((mags[f*bins+b]-(mx-60))/60,0,1),li=(v*255|0)*3,i=((bins-1-b)*F+f)*4;d[i]=lut[li];d[i+1]=lut[li+1];d[i+2]=lut[li+2];d[i+3]=255;}
+    ox.putImageData(img,0,0);g.imageSmoothingEnabled=false;g.drawImage(stftOff,L,T,pw,ph);
+    g.font=MONO;g.fillStyle='#4B5160';g.textAlign='right';g.textBaseline='middle';const ny=fs/2;[0,0.25,0.5,0.75,1].forEach(k=>g.fillText(Math.round(ny*k)+' Hz',L-5,T+(1-k)*ph));
+    g.textAlign='center';g.textBaseline='top';const st=S.span<=2?0.2:0.5;for(let s=0;s<=S.span+1e-6;s+=st)g.fillText(s<1e-6?'now':'-'+s.toFixed(1)+' s',L+pw-(s/S.span)*pw,T+ph+5);
+    $('tStftInfo').textContent=M+'-sample Hann window · '+F+' frames · 60 dB range';}
+
+  /* state and controls */
+  const guide=t=>{$('tGuide').textContent=t;};
+  function setPressed(groupId,v){document.querySelectorAll('#'+groupId+' [data-v]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))));}
+  function syncLive(){$('tLive').setAttribute('aria-pressed',String(S.live));$('tReplay').setAttribute('aria-pressed',String(!S.live));$('tPlay').textContent=S.playing?'❚❚':'▶';$('tPlay').setAttribute('aria-label',S.playing?'Pause':'Play');}
+  function goLive(){S.live=true;S.playing=true;viewEnd=tNow;syncLive();}
+  function goReplay(){S.live=false;syncLive();}
+  function shift(ds){goReplay();const oldest=tNow-count/RH+S.win;viewEnd=clamp(viewEnd+ds,oldest,tNow);if(viewEnd>=tNow-1e-6&&ds>0)goLive();}
+  function selectStream(id){S.stream=ST.find(x=>x.id===id);document.querySelectorAll('.t-stream').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.id===id)));
+    resetData();goLive();$('tEmpty').hidden=true;$('tViews').hidden=false;$('tHead').hidden=false;
+    $('tHeadSite').textContent=S.stream.site.name;$('tHeadRate').textContent=fmtR(S.stream.rate);$('tHeadDx').textContent=S.stream.dx+' m';
+    $('tHeadShape').textContent=(S.win*RH)+'×'+S.stream.ch+' float32';
+    $('tMapInfo').textContent=S.stream.ch+' channels · '+(S.stream.site.lengthM/1000).toFixed(2)+' km of fiber at '+S.stream.dx+' m';
+    $('tAnaInfo').textContent=fmtR(S.stream.rate)+' · '+S.stream.ch+' channels · '+S.stream.dx+' m spacing';
+    setView(S.view);mapKey='';}
+  function setView(v){S.view=v;$('tOverview').setAttribute('aria-pressed',String(v==='overview'));$('tAnalysis').setAttribute('aria-pressed',String(v==='analysis'));
+    const views=$('tViews');views.classList.toggle('analysis',v==='analysis');views.classList.toggle('stacked',S.stacked&&v==='overview');$('tMapP').hidden=v==='analysis';$('tAna').hidden=v!=='analysis';
+    guide(v==='analysis'?'Select any point on the cable and examine it in detail. Pause, go back, replay.':'Every row is a moment in time, every column a point along the route, and the color is what the fiber feels.');
+    lastAna=0;}
+  function signIn(){S.signed=true;$('tSignin').hidden=true;$('tApp').hidden=false;if(!S.stream){$('tViews').hidden=true;$('tEmpty').hidden=false;guide('Sign in, and the streams you hold are listed. Select a stream to open it.');}}
+  function signOut(){S.signed=false;S.stream=null;$('tApp').hidden=true;$('tSignin').hidden=false;$('tHead').hidden=true;document.querySelectorAll('.t-stream').forEach(b=>b.setAttribute('aria-pressed','false'));}
+  $('tForm').addEventListener('submit',e=>{e.preventDefault();signIn();});
+  $('tOut').addEventListener('click',signOut);
+  $('tList').addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(b)selectStream(b.dataset.id);});
+  $('tOverview').addEventListener('click',()=>setView('overview'));$('tAnalysis').addEventListener('click',()=>setView('analysis'));
+  $('tSide').addEventListener('click',()=>{S.stacked=false;$('tSide').setAttribute('aria-pressed','true');$('tStack').setAttribute('aria-pressed','false');setView(S.view);});
+  $('tStack').addEventListener('click',()=>{S.stacked=true;$('tSide').setAttribute('aria-pressed','false');$('tStack').setAttribute('aria-pressed','true');setView(S.view);});
+  $('tLive').addEventListener('click',goLive);$('tReplay').addEventListener('click',()=>{goReplay();S.playing=false;syncLive();});
+  $('tBack').addEventListener('click',()=>shift(-10));$('tFwd').addEventListener('click',()=>shift(10));
+  $('tPlay').addEventListener('click',()=>{if(S.live){goReplay();S.playing=false;}else S.playing=!S.playing;syncLive();});
+  $('tSpeed').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(!b)return;S.speed=+b.dataset.v;setPressed('tSpeed',b.dataset.v);});
+  $('tWin').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(!b)return;S.win=+b.dataset.v;setPressed('tWin',b.dataset.v);if(S.stream)$('tHeadShape').textContent=(S.win*RH)+'×'+S.stream.ch+' float32';});
+  $('tUnits').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(!b)return;S.units=b.dataset.v;setPressed('tUnits',b.dataset.v);});
+  $('tSpan').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(!b)return;S.span=+b.dataset.v;setPressed('tSpan',b.dataset.v);lastAna=0;});
+  $('tFft').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(!b)return;S.fft=+b.dataset.v;setPressed('tFft',b.dataset.v);lastAna=0;});
+  $('tOverlay').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(!b)return;S.overlay=b.dataset.v;setPressed('tOverlay',b.dataset.v);});
+  $('tStyle').addEventListener('click',e=>{const b=e.target.closest('[data-v]');if(!b)return;S.style=b.dataset.v;setPressed('tStyle',b.dataset.v);mapKey='';});
+  $('tZin').addEventListener('click',()=>{S.zoom=Math.min(2.5,S.zoom*1.25);mapKey='';});$('tZout').addEventListener('click',()=>{S.zoom=Math.max(0.6,S.zoom/1.25);mapKey='';});$('tZreset').addEventListener('click',()=>{S.zoom=1;mapKey='';});
+  $('tPal').addEventListener('change',e=>{S.pal=e.target.value;lastAna=0;});
+  $('tLower').addEventListener('input',e=>{S.lower=+e.target.value/100;});$('tUpper').addEventListener('input',e=>{S.upper=+e.target.value/100;});
+  $('tAuto').addEventListener('click',()=>{const rows=S.win*RH,endK=Math.max(0,Math.round((tNow-viewEnd)*RH)),vals=[];for(let r=0;r<rows&&endK+r<count;r+=3){const o=rowOff(endK+r);for(let c=0;c<COLS;c+=3)vals.push(buf[o+c]);}
+    vals.sort((a,b)=>a-b);const p=vals[Math.floor(vals.length*0.995)]||1;S.upper=clamp(p/0.9,0.4,3);S.lower=0;$('tUpper').value=Math.round(S.upper*100);$('tLower').value=0;});
+  const wfCv=$('tWf');
+  function wfPick(e){if(!wfGeom)return null;const r=wfCv.getBoundingClientRect(),x=e.clientX-r.left-wfGeom.L,y=e.clientY-r.top-wfGeom.T;if(x<0||x>wfGeom.pw||y<0||y>wfGeom.ph)return null;
+    return {c:clamp(Math.floor(x/wfGeom.pw*COLS),0,COLS-1),k:Math.round(y/wfGeom.ph*S.win*RH)};}
+  wfCv.addEventListener('pointermove',e=>{const p=wfPick(e);if(p){S.hover=p.c;S.hoverK=p.k;}else S.hover=null;});
+  wfCv.addEventListener('pointerleave',()=>{S.hover=null;S.hoverK=0;});
+  wfCv.addEventListener('click',e=>{const p=wfPick(e);if(p){S.sel=p.c;lastAna=0;}});
+  $('tMap').addEventListener('click',e=>{const cv=$('tMap'),r=cv.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top,w=cv.clientWidth,h=cv.clientHeight;
+    const [x0,y0]=mapXY(0,w,h),[x1,y1]=mapXY(1,w,h),dx=x1-x0,dy=y1-y0,u=clamp(((px-x0)*dx+(py-y0)*dy)/(dx*dx+dy*dy),0,1);S.sel=clamp(Math.floor(u*COLS),0,COLS-1);lastAna=0;});
+
+  /* loop */
+  let last=0,lastAna=0,raf=0;
+  /* guided tour: a scripted cursor drives the interface like the recorded demonstration */
+  const cur=$('tCursor');let autoT=0,ai=0;
+  function cursorTo(el,fx,fy){if(!el)return;const r=el.getBoundingClientRect();cur.style.left=(r.left+r.width*(fx==null?0.5:fx))+'px';cur.style.top=(r.top+r.height*(fy==null?0.5:fy))+'px';}
+  function clickFx(){cur.classList.remove('click');void cur.offsetWidth;cur.classList.add('click');}
+  const AUTO=[
+    [0.3,()=>{$('tUser').value='';$('tPass').value='';cursorTo($('tUser'),0.25);}],
+    [2.0,()=>cursorTo($('tPass'),0.25)],
+    [3.3,()=>cursorTo(document.querySelector('#tForm .t-btn'))],
+    [3.9,()=>{clickFx();signIn();guide('This is what a customer sees. Sign in, and the streams you hold are listed.');}],
+    [4.9,()=>cursorTo(document.querySelector('.t-stream[data-id="1-0"]'))],
+    [5.6,()=>{clickFx();selectStream('1-0');}],
+    [6.6,()=>cursorTo($('tWf'),0.3,0.45)],
+    [9.6,()=>cursorTo($('tWf'),0.62,0.35)],
+    [10.4,()=>{clickFx();S.sel=Math.round(COLS*0.62);}],
+    [12.2,()=>{cursorTo($('tMap'),0.55,0.5);guide('On the map, the same point is placed on the route, as it happens.');}],
+    [15.4,()=>cursorTo($('tAnalysis'))],
+    [16.1,()=>{clickFx();setView('analysis');}],
+    [17.4,()=>cursorTo($('tWave'),0.55,0.5)],
+    [24.2,()=>cursorTo($('tOverview'))],
+    [24.9,()=>{clickFx();setView('overview');}],
+    [26.2,()=>cursorTo($('tBack'))],
+    [26.9,()=>{clickFx();shift(-10);S.playing=false;syncLive();guide('Pause, go back and replay any moment that is still kept.');}],
+    [28.8,()=>cursorTo($('tPlay'))],
+    [29.4,()=>{clickFx();S.playing=true;syncLive();}],
+    [34.2,()=>cursorTo($('tLive'))],
+    [34.9,()=>{clickFx();goLive();setView('overview');}],
+    [39,()=>{autoT=6.5;ai=AUTO.findIndex(a=>a[0]>6.5);}]];
+  function runAuto(dt){autoT+=dt;const u='demo-tenant';
+    if(autoT>0.6&&autoT<1.9)$('tUser').value=u.slice(0,Math.round(clamp((autoT-0.6)/1.2,0,1)*u.length));
+    if(autoT>2.3&&autoT<3.1)$('tPass').value='x'.repeat(Math.round(clamp((autoT-2.3)/0.7,0,1)*12));
+    while(ai<AUTO.length&&autoT>=AUTO[ai][0]){const f=AUTO[ai][1];ai++;f();}
+    if(S.stream&&autoT>6.6&&autoT<9.6){S.hover=Math.round(COLS*(0.3+0.32*(autoT-6.6)/3));S.hoverK=40;}else if(S.stream&&autoT>10.4&&autoT<11)S.hover=null;}
+  function stopAuto(){S.auto=false;root.classList.remove('auto');const wasFocused=document.activeElement===$('tTake');$('tTake').hidden=true;$('tTour').hidden=true;if(wasFocused)$('tClose').focus();}
+  $('tTake').addEventListener('click',stopAuto);
+  function loop(now){raf=requestAnimationFrame(loop);const dt=Math.min(0.1,(now-(last||now))/1000);last=now;if(document.hidden)return;if(S.auto)runAuto(dt);if(!S.signed||!S.stream)return;
+    rowAcc+=dt;let g=0;while(rowAcc>=1/RH&&g++<6){rowAcc-=1/RH;genRow();}if(g>=6)rowAcc=0;
+    if(S.live)viewEnd=tNow;else if(S.playing){viewEnd+=dt*S.speed;if(viewEnd>=tNow)goLive();}
+    const oldest=tNow-count/RH;if(viewEnd<oldest+S.win)viewEnd=Math.min(tNow,oldest+S.win);
+    const st=$('tStatus');st.textContent=S.live?'LIVE · following · '+new Date().toISOString().slice(11,19)+' UTC':'REPLAY · '+(S.playing?'playing':'paused')+' · '+(tNow-viewEnd).toFixed(1)+' s behind live';
+    st.parentNode.classList.toggle('replay',!S.live);const span=tNow-oldest,pos=span>0?(viewEnd-oldest)/span:1;$('tFill').style.width=(pos*100)+'%';$('tKnob').style.left=(pos*100)+'%';$('tKept').textContent=Math.round(span)+' s kept';
+    drawWf();if(S.view==='overview')drawMap();
+    else if(now-lastAna>(S.live||S.playing?160:1000)){lastAna=now;computeWave();drawWave();drawStft();$('tChTitle').textContent='Channel '+chOf(S.sel)+' waveform';}}
+  let returnFocus=null;
+  let onClose=null;
+  function open(opts){const auto=!!(opts&&opts.auto)&&!reduceMotion;S.open=true;returnFocus=document.activeElement;root.hidden=false;root.classList.remove('t-in');void root.offsetWidth;root.classList.add('t-in');last=0;if(!raf)raf=requestAnimationFrame(loop);
+    document.querySelector('.app').inert=true;document.body.style.overflow='hidden';
+    S.auto=auto;root.classList.toggle('auto',auto);$('tTake').hidden=!auto;$('tTour').hidden=!auto;
+    if(auto){if(S.signed)signOut();S.view='overview';autoT=0;ai=0;$('tUser').value='';$('tPass').value='';cur.style.left='55%';cur.style.top='70%';$('tClose').focus();}
+    else if(!S.signed){$('tSignin').hidden=false;$('tApp').hidden=true;document.querySelector('#tForm .t-btn').focus();}
+    else $('tClose').focus();}
+  function close(){S.open=false;stopAuto();root.hidden=true;cancelAnimationFrame(raf);raf=0;document.querySelector('.app').inert=false;document.body.style.overflow='';if(returnFocus&&returnFocus.isConnected)returnFocus.focus();else stTitle.focus();if(onClose)onClose();}
+  $('tClose').addEventListener('click',close);
+  document.addEventListener('keydown',e=>{
+    if(!S.open)return;
+    if(e.key==='Escape'){e.preventDefault();close();return;}
+    if(e.key==='Tab'){
+      if(S.auto)stopAuto();
+      const items=Array.from(root.querySelectorAll('a[href],button:not([disabled]),input,select,[tabindex="0"]')).filter(el=>el.getClientRects().length&&!el.closest('[hidden]'));
+      const first=items[0],last=items[items.length-1];
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+    }
+  },true);
+  return {open,close,isOpen:()=>S.open,onClose:f=>{onClose=f;}};
+})();
+
+TEN.onClose(()=>{if(STEPS[step].tenant)flyTo(nearScreen());});
+const pathSteps={sensing:0,cofiber:3,tenant:7};
+function navigatePath(){
+  const key=location.hash.slice(1);
+  if(!Object.prototype.hasOwnProperty.call(pathSteps,key))return;
+  if(TEN.isOpen())TEN.close();
+  document.getElementById('viewOptions').open=false;
+  panels.story=true;panels.side=true;setStep(pathSteps[key],true);syncPanels();
+  if(!TEN.isOpen())stTitle.focus({preventScroll:true});
+}
+window.addEventListener('hashchange',navigatePath);
+document.querySelectorAll('[data-path]').forEach(a=>a.addEventListener('click',e=>{
+  if(a.hash===location.hash){e.preventDefault();navigatePath();}
+}));
+const viewOptions=document.getElementById('viewOptions');
+document.addEventListener('click',e=>{if(!viewOptions.contains(e.target))viewOptions.open=false;});
+viewOptions.addEventListener('keydown',e=>{if(e.key==='Escape'){viewOptions.open=false;viewOptions.querySelector('summary').focus();}});
+navigatePath();
+} catch(error) {
+  console.error('Interactive story initialization failed:', error);
+  showUnavailable('The interactive scene could not start. Please try refreshing the page.');
+}
+})();
+</script>
+
+</body>
+</html>

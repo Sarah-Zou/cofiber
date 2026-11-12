@@ -2,6 +2,7 @@ import Nav from "./components/Nav";
 import Hero from "./components/Hero";
 import Statement from "./components/Statement";
 import Platform from "./components/Platform";
+import TechnologyPreview from "./components/TechnologyPreview";
 import Ecosystem from "./components/Ecosystem";
 import Approach from "./components/Approach";
 import WhyHard from "./components/WhyHard";
@@ -17,6 +18,7 @@ export default function App() {
         <Hero />
         <Statement />
         <Platform />
+        <TechnologyPreview />
         <Ecosystem />
         <Approach />
         <WhyHard />

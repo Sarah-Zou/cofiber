@@ -79,6 +79,31 @@ public/
 
 ## Customization
 
+### Interactive technology story
+
+The homepage navigation, hero, and technology preview link to `/how-it-works/`.
+The standalone page lives in `public/how-it-works/index.html`; Vite copies it
+into `dist/how-it-works/index.html` during the normal build. It needs no SPA
+route or hosting rewrite, so direct links work on GitHub Pages.
+
+- Edit the story and scene in `public/how-it-works/index.html`.
+- Edit the website integration styles in `public/how-it-works/site.css`.
+- Edit the homepage teaser in `src/components/TechnologyPreview.tsx` and its
+  illustration in `public/how-it-works/preview.svg`.
+- Share chapter shortcuts with `#sensing`, `#cofiber`, or `#tenant`.
+- The demo uses synthetic data and read-only sample access fields; it does not
+  authenticate users or connect to a live sensing service.
+- Three.js r128 and its matching OrbitControls are served locally from `vendor/`
+  with their MIT license. Fonts use Google Fonts with system fallbacks.
+- The page preserves the site's current `noindex, nofollow` policy.
+
+`CoFiber_tech_intro.html` is the supplied reference. The deployed, maintained
+version is `public/how-it-works/index.html`.
+
+Before publishing changes, run `npm run build` and `npm run preview`; check
+the homepage links, all three chapter shortcuts, provider comparison controls,
+tenant demo entry/exit, and the mobile layout.
+
 - **Colors:** Edit `tailwind.config.js` — primary accent is `#C94F00` (dark orange)
 - **Copy:** All content lives directly in each component file
 - **Contact email:** Search for `hello@co-fiber.com` and replace throughout
