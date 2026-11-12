@@ -48,6 +48,29 @@ a:focus-visible, summary:focus-visible, #stTitle:focus-visible {
 .dots button[aria-current="step"]::after { border-color: var(--accent); background: var(--accent); }
 .storynav > .btn { min-height: 42px; }
 .story .story-access { margin-top: 8px; display: inline-flex; align-self: flex-start; text-decoration: none; }
+/* Keep the application picker, selected description, and navigation together. */
+.story--apps { width: min(480px, calc(100% - 32px)); gap: 8px; padding: 14px 16px; }
+.story--apps .secs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.story--apps .srow { height: 100%; min-height: 44px; padding: 6px 9px; column-gap: 7px; }
+.story--apps .sname { font-size: 13px; line-height: 1.3; text-decoration: none; }
+.story--apps .app-detail { min-height: 112px; padding-top: 10px; border-top: 1px solid var(--line); }
+.story--apps .app-detail h3 { margin: 0 0 5px; font-size: 14px; line-height: 1.3; }
+.story--apps .app-detail p { font-size: 13px; line-height: 1.5; }
+.story--apps .storynav { flex-wrap: nowrap; gap: 8px; }
+.story--apps .dots { flex: 1 1 auto; flex-wrap: nowrap; }
+.story--apps .dots button { width: 20px; height: 28px; flex: none; }
+.story--apps .dots button::after { left: 6px; }
+.story--apps .storynav > .btn { min-height: 38px; }
+@media (min-width: 821px) and (max-height: 800px) {
+  .story--apps .secs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .story--apps .srow { min-height: 48px; }
+}
+@media (min-width: 821px) and (max-height: 650px) {
+  .story--apps { padding: 10px 14px; gap: 6px; }
+  .story--apps h2 { font-size: 22px; }
+  .story--apps .body { gap: 6px; }
+  .story--apps .app-detail { min-height: 0; padding-top: 6px; }
+}
 .demo-disclosure { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); color: #C4BBB1; font: 10px var(--mono); background: #0B1220D9; padding: 5px 9px; white-space: nowrap; border: 1px solid #ffffff20; pointer-events: none; }
 .tenant-actions { position: sticky; top: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 16px; background: #1C1815; color: #FBF9F4; }
 .tenant-actions .t-close { position: static; margin: 0; min-height: 38px; }
@@ -93,6 +116,9 @@ body.demo-ready .fallback { display: none; }
   .main { overflow: visible; }
   .stage canvas { touch-action: pan-y; }
   .story { width: auto; }
+  .story.story--apps { width: auto; }
+  .story--apps .storynav { flex-wrap: wrap; }
+  .story--apps .dots { flex-basis: 100%; }
   .story .body { font-size: 14px; }
   .storynav { position: sticky; bottom: 0; background: var(--panel-solid); padding-top: 10px; }
   .demo-disclosure { left: 12px; transform: none; bottom: 8px; font-size: 8px; }

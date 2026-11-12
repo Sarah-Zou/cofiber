@@ -1215,14 +1215,19 @@ stPrev.addEventListener('click',goPrev);stNext.addEventListener('click',goNext);
 function clearTen(){tenTimers.forEach(clearTimeout);tenTimers=[];}
 function tenantSequence(instant){clearTen();if(instant||reduceMotion){flyTo(screenView(),true);TEN.open({auto:!reduceMotion});return;}
   flyTo(nearScreen(),false,2600);tenTimers.push(setTimeout(()=>flyTo(screenView(),false,2400),2900));tenTimers.push(setTimeout(()=>{if(STEPS[step].tenant)TEN.open({auto:true});},5500));}
-function appsList(){return '<p class="prog">Applications viewed: <b>'+seen.size+' of '+SECTIONS.length+'</b></p><ul class="secs">'+SECTIONS.map((S,k)=>'<li><button type="button" class="srow" data-part="'+(k+1)+'" aria-pressed="'+(stPart===k+1)+'" data-seen="'+(seen.has(S.id)?1:0)+'"><span class="dot" style="background:'+S.color+'"></span><span class="sname">'+S.name+'</span><span class="smeta">'+(stPart===k+1?S.long:S.desc)+'</span></button></li>').join('')+'</ul>';}
+function appsList(){
+  const selected=stPart>0?SECTIONS[stPart-1]:null;
+  return '<p class="prog">Choose an application · <b>'+seen.size+' of '+SECTIONS.length+' explored</b></p>'+
+    '<ul class="secs">'+SECTIONS.map((S,k)=>'<li><button type="button" class="srow" data-part="'+(k+1)+'" aria-pressed="'+(stPart===k+1)+'" aria-controls="applicationDetail" data-seen="'+(seen.has(S.id)?1:0)+'" title="'+S.desc+'"><span class="dot" style="background:'+S.color+'"></span><span class="sname">'+S.name+'</span></button></li>').join('')+'</ul>'+
+    '<section class="app-detail" id="applicationDetail" aria-labelledby="applicationTitle"><h3 id="applicationTitle">'+(selected?selected.name:'One loop, many applications')+'</h3><p>'+(selected?selected.long:STEPS[step].body[0])+'</p></section>';}
 function renderStory(){const s=STEPS[step],n=partsOf(s);cmpHold.appendChild(cmpBox);
+  storyEl.classList.toggle('story--apps',!!s.apps);
   let eb='Step '+(step+1)+' of '+STEPS.length;
   if(s.apps)eb+=stPart?' · application '+stPart+' of '+SECTIONS.length:' · overview';else if(s.stages)eb+=' · part '+(stPart+1)+' of '+n;
   stEyebrow.textContent=eb;stTitle.textContent=s.title;
   const path=step<3?'sensing':step<7?'cofiber':'tenant';
   document.querySelectorAll('[data-path]').forEach(a=>{if(a.dataset.path===path)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current');});
-  const g=s.stages?s.stages[stPart]:null,body=g?g.body:(s.apps&&stPart>0?['Next continues to the following application. Any application in the list can be selected to go to it directly.']:s.body);
+  const g=s.stages?s.stages[stPart]:null,body=s.apps?[]:(g?g.body:s.body);
   stBody.innerHTML=(g?'<p class="stage-h">'+g.label.charAt(0).toUpperCase()+g.label.slice(1)+'</p>':'')+body.map(p=>'<p>'+p+'</p>').join('')+(s.apps?appsList():'')+(g&&g.cmp?'<div id="cmpSlot"></div>':'')+(s.extra?s.extra():'');
   const slot=document.getElementById('cmpSlot');if(slot)slot.appendChild(cmpBox);storyEl.scrollTop=0;
   stPrev.disabled=step===0&&stPart===0;
@@ -1259,7 +1264,7 @@ function tween(now){if(!tw)return;const k=Math.min(1,(now-tw.t0)/tw.d),e=0.5-0.5
   controls.target.copy(tg);camera.position.copy(tg).add(off);if(k>=1){camera.position.copy(tw.p1);controls.target.copy(tw.q1);tw=null;}}
 document.addEventListener('keydown',e=>{if(e.target.closest&&e.target.closest('input,textarea,select,button,a,summary'))return;
   if(TEN.isOpen()||e.metaKey||e.ctrlKey||e.altKey)return;if(e.key==='ArrowRight'){e.preventDefault();goNext();}else if(e.key==='ArrowLeft'){e.preventDefault();goPrev();}});
-stBody.addEventListener('click',e=>{const pb=e.target.closest('[data-part]');if(pb){setStage(+pb.dataset.part);return;}if(e.target.closest('[data-open-tenant]'))tenantSequence(false);if(e.target.closest('[data-hw]')){clearTen();flyTo(HWV,false,2000);}});
+stBody.addEventListener('click',e=>{const pb=e.target.closest('[data-part]');if(pb){const part=+pb.dataset.part;setStage(part);stBody.querySelector('[data-part="'+part+'"]').focus({preventScroll:true});return;}if(e.target.closest('[data-open-tenant]'))tenantSequence(false);if(e.target.closest('[data-hw]')){clearTen();flyTo(HWV,false,2000);}});
 
 
 /* ---------- Panel views and the section waterfall ---------- */
