@@ -260,7 +260,7 @@ table.ben th{font-weight:700;white-space:nowrap}
 }
 
 </style>
-<link rel="stylesheet" href="/how-it-works/site.css?v=2">
+<link rel="stylesheet" href="/how-it-works/site.css?v=3">
 
 </head>
 <body>
@@ -339,7 +339,7 @@ table.ben th{font-weight:700;white-space:nowrap}
 <div id="cmpHold" hidden><div class="cmpbox" id="cmpBox">
   <div class="count"><span>Solution providers</span><div class="stepper"><button class="btn" id="provMinus" type="button" aria-label="Remove a provider">−</button><output id="provN">5</output><button class="btn" id="provPlus" type="button" aria-label="Add a provider">+</button></div></div>
   <div class="tbl-wrap"><table class="cmp" id="cmp"></table></div>
-  <p class="cap">Counts are illustrative and follow the number of providers selected above.</p>
+  <p class="cap">Illustrative counts. Adjust the provider total to compare.</p>
 </div></div>
 
 <div class="tenant" id="tenant" hidden role="dialog" aria-modal="true" aria-label="FiberVM tenant interface">
@@ -1121,13 +1121,13 @@ modeToday.addEventListener('click',()=>setMode(0));modeVM.addEventListener('clic
 const cmp=document.getElementById('cmp'),provN=document.getElementById('provN'),provMinus=document.getElementById('provMinus'),provPlus=document.getElementById('provPlus');
 function renderTable(){const c0=modeTarget===0,a=c0?' class="cur"':'',b=!c0?' class="cur"':'',an=c0?' class="n cur"':' class="n"',bn=!c0?' class="n cur"':' class="n"';
   cmp.innerHTML='<thead><tr><th></th><th'+a+'>Today</th><th'+b+'>With FiberVM</th></tr></thead><tbody>'+
-  '<tr><th class="row">Fiber strands occupied</th><td'+an+'>'+N+'</td><td'+bn+'>1</td></tr>'+
-  '<tr><th class="row">Racks in the owner\'s server room</th><td'+an+'>'+N+'</td><td'+bn+'>1 unit</td></tr>'+
-  '<tr><th class="row">Interrogators installed</th><td'+an+'>'+N+'</td><td'+bn+'>1 modular</td></tr>'+
-  '<tr><th class="row">Access arrangements with the owner</th><td'+an+'>'+N+' × 3</td><td'+bn+'>1</td></tr>'+
-  '<tr><th class="row">Organizations able to use the data</th><td'+an+'>'+N+'</td><td'+bn+'>'+N+' + '+N+' new</td></tr>'+
-  '<tr><th class="row">Hardware owned by each provider</th><td'+a+'>Interrogator, servers, software</td><td'+b+'>None</td></tr>'+
-  '<tr><th class="row">To add one more provider</th><td'+a+'>New strand, rack and agreements</td><td'+b+'>A subscription</td></tr></tbody>';
+  '<tr><th class="row" scope="row">Fiber strands</th><td'+an+'>'+N+'</td><td'+bn+'>1</td></tr>'+
+  '<tr><th class="row" scope="row">Racks in owner\'s room</th><td'+an+'>'+N+'</td><td'+bn+'>1 unit</td></tr>'+
+  '<tr><th class="row" scope="row">Interrogators</th><td'+an+'>'+N+'</td><td'+bn+'>1 modular</td></tr>'+
+  '<tr><th class="row" scope="row">Owner access agreements</th><td'+an+'>'+N+' × 3</td><td'+bn+'>1</td></tr>'+
+  '<tr><th class="row" scope="row">Organizations using data</th><td'+an+'>'+N+'</td><td'+bn+'>'+N+' + '+N+' new</td></tr>'+
+  '<tr><th class="row" scope="row">Hardware per provider</th><td'+a+'>Interrogator, servers, software</td><td'+b+'>None</td></tr>'+
+  '<tr><th class="row" scope="row">Add another provider</th><td'+a+'>New strand, rack and agreements</td><td'+b+'>A subscription</td></tr></tbody>';
   provN.textContent=N;provMinus.disabled=N<=2;provPlus.disabled=N>=NMAX;}
 function setN(n){N=clamp(n,2,NMAX);placeApps();renderTable();}
 provMinus.addEventListener('click',()=>setN(N-1));provPlus.addEventListener('click',()=>setN(N+1));
@@ -1180,10 +1180,8 @@ const STEPS=[
     {label:'the solution providers',view:PROVV,body:[
       'Five solution providers deliver services along this loop today: rail safety, pipeline protection, damage prevention, traffic analytics and a university laboratory. Each one runs its own monitoring desk.',
       'Each desk receives its data from the provider\'s own equipment in the fiber owner\'s building, shown by the colored streams.']},
-    {label:'back in the building: the cost of duplication',view:ROOM,body:[
-      'Each provider installs its own interrogator, servers and software in the owner\'s server room, and needs its own agreement for a test, for a trial and again for adoption.',
-      'Every additional provider adds a strand, a rack and a set of agreements, so equipment and floor space grow with the number of providers, and new entrants face a high barrier before they receive any data.',
-      'The table compares today\'s arrangement with FiberVM. Change the number of providers to see how the counts grow.'],cmp:true}]},
+    {title:'The cost of duplication',view:ROOM,body:[
+      'Each provider adds hardware and three access agreements: test, trial and adoption.'],cmp:true}]},
   {title:'One CoFiber unit replaces the stacks',mode:1,ents:false,view:ROOM,body:[
     'With FiberVM, the owner grants access once, to CoFiber. One modular CoFiber unit, a 4U chassis in a standard rack, replaces the providers\' equipment, and the floor space is freed.',
     'The unit holds the interrogator modules the network requires, and FiberVM works with interrogators from different manufacturers.',
@@ -1220,15 +1218,16 @@ function appsList(){
   return '<p class="prog">Choose an application · <b>'+seen.size+' of '+SECTIONS.length+' explored</b></p>'+
     '<ul class="secs">'+SECTIONS.map((S,k)=>'<li><button type="button" class="srow" data-part="'+(k+1)+'" aria-pressed="'+(stPart===k+1)+'" aria-controls="applicationDetail" data-seen="'+(seen.has(S.id)?1:0)+'" title="'+S.desc+'"><span class="dot" style="background:'+S.color+'"></span><span class="sname">'+S.name+'</span></button></li>').join('')+'</ul>'+
     '<section class="app-detail" id="applicationDetail" aria-labelledby="applicationTitle"><h3 id="applicationTitle">'+(selected?selected.name:'One loop, many applications')+'</h3><p>'+(selected?selected.long:STEPS[step].body[0])+'</p></section>';}
-function renderStory(){const s=STEPS[step],n=partsOf(s);cmpHold.appendChild(cmpBox);
+function renderStory(){const s=STEPS[step],n=partsOf(s),g=s.stages?s.stages[stPart]:null;cmpHold.appendChild(cmpBox);
   storyEl.classList.toggle('story--apps',!!s.apps);
+  storyEl.classList.toggle('story--comparison',!!(g&&g.cmp));
   let eb='Step '+(step+1)+' of '+STEPS.length;
   if(s.apps)eb+=stPart?' · application '+stPart+' of '+SECTIONS.length:' · overview';else if(s.stages)eb+=' · part '+(stPart+1)+' of '+n;
-  stEyebrow.textContent=eb;stTitle.textContent=s.title;
+  stEyebrow.textContent=eb;stTitle.textContent=g&&g.title?g.title:s.title;
   const path=step<3?'sensing':step<7?'cofiber':'tenant';
   document.querySelectorAll('[data-path]').forEach(a=>{if(a.dataset.path===path)a.setAttribute('aria-current','location');else a.removeAttribute('aria-current');});
-  const g=s.stages?s.stages[stPart]:null,body=s.apps?[]:(g?g.body:s.body);
-  stBody.innerHTML=(g?'<p class="stage-h">'+g.label.charAt(0).toUpperCase()+g.label.slice(1)+'</p>':'')+body.map(p=>'<p>'+p+'</p>').join('')+(s.apps?appsList():'')+(g&&g.cmp?'<div id="cmpSlot"></div>':'')+(s.extra?s.extra():'');
+  const body=s.apps?[]:(g?g.body:s.body);
+  stBody.innerHTML=(g&&g.label?'<p class="stage-h">'+g.label.charAt(0).toUpperCase()+g.label.slice(1)+'</p>':'')+body.map(p=>'<p>'+p+'</p>').join('')+(s.apps?appsList():'')+(g&&g.cmp?'<div id="cmpSlot"></div>':'')+(s.extra?s.extra():'');
   const slot=document.getElementById('cmpSlot');if(slot)slot.appendChild(cmpBox);storyEl.scrollTop=0;
   stPrev.disabled=step===0&&stPart===0;
   let nx=step===STEPS.length-1&&stPart===n-1?'Restart':'Next';
